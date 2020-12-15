@@ -50,4 +50,5 @@
 - help from Thomas: 
   - TDO missmatch apparently a know problem because of how Raspberry Pi 4 is initialising it's GPIO pins.
   - Plan B: use Xilinx USB programmer
-- Thomas and Bernardo will both test on their setup to determine if the error is only on my devices
+  - attempt to give him ssh access to my raspberry, fails because router firewall doesn't allow it
+- Thomas and Bernardo [IF] will both test on their setup to determine if the error is only on my devices
