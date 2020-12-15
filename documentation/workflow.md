@@ -1,4 +1,4 @@
-# Log workflow and current status of my Bachelor Thesis: P2P-Network on FPGAs
+## Log workflow and current status
 
 2020-12-12:
 - Connect to raspberry pi via ssh:
