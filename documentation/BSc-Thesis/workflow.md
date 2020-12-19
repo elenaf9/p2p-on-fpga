@@ -64,3 +64,6 @@ __2020-12-16__:
     - Disadvantage:
        - female headers between Pi and iccfpga-dev-board-v2.1 are attached to the wrong side, I will have to buy new special headers, will take some time
        - maybe other differences that can cause error in the development?? Not really tested yet
+
+__2020-12-18__:
+- TDO-missmatch error was a mechanical error, the iccfpga-module was not exactly horizontal in the socket because the screws were to tight, now solved, flashing the core firmware was sucessful
