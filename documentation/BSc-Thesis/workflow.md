@@ -66,4 +66,20 @@ __2020-12-16__:
        - maybe other differences that can cause error in the development?? Not really tested yet
 
 __2020-12-18__:
-- TDO-missmatch error was a mechanical error, the iccfpga-module was not exactly horizontal in the socket because the screws were to tight, now solved, flashing the core firmware was sucessful
+- TDO-missmatch error was a mechanical error, the iccfpga-module was not exactly horizontal in the socket because the screws were to tight, now solved, flashing the core firmware was sucessfull
+- `./start_serial` not successful, error `cannot open /dev/ttyS0: no fuch file or directory`
+
+__2020-12-24__:
+- Setup to use Raspberry Pi 3 Model B+ instead of Raspberry to prevent the above problem that a Pi 4 can break. Flashing works as expected.  
+- starting serial still not successful
+
+__2020-12-25__:
+- Enabled serial interface in the raspi-config file, which I already did at some point before on the PI 4, but seems like I didn't do it correctly/ flashed a new image afterwards and forgot to do it again/ ... 
+- Starting serial picocom terminal now successful, commands described in the quickstart work
+- Next step figure out how to run a binary on the soft-riscv-cpu
+-> Decide to start from the bottom and get started with Vivado to hopefully eventually understand the whole VexRiscV blackbox
+
+__2020-12-27__:
+- try to open the iccfpga-rv project in Vivado (Xilinx Software for development on their FPGAs), but need to update version etc, and right now too complex because I am not familiar with Vivado
+- try to connect to virtual cable server on the raspberry pi with Vivado (iccfpga-utils provide a script for that) -> VCS on raspberry works but Vivado somehow doesn't detect it at the Raspberries IP address + port
+- Discovered Linux-on-litex-vexriscv, going to look into that further since it is compatible with Spartan &
