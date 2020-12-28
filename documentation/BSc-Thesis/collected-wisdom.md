@@ -6,6 +6,7 @@ __Terminolgy: microprozessor vs microcontroller vs SoC vs ASIC vs FPGA__
 >  Similar to how a microcontroller integrates a microprocessor with peripheral circuits and memory, an SoC can be seen as integrating a microcontroller with even more advanced peripherals ([Wikipedia](https://en.wikipedia.org/wiki/System_on_a_chip));
 - ASIC: "Application specific integrated circuit": designed for a certain purpose: often include a microcontroller; 
 - FPGA: "Field Programmable gate array": a general purpose IC with logical elements that can be configured (and always reconfigured) with a HDL: can be programmed simulate a softcore-microprocessor; often a FPGA is used for prototyping and then once a design is verified it's created in hardware as an ASIC; useful in security critical areas to verify the microprocessor (everything is transparent)
+
 __FPGA Clock__
 https://hardwarebee.com/ultimate-guide-fpga-clock/
 - signal inside any digital circuit that determines how fast a flip flop (or a group of flip flops) runs
