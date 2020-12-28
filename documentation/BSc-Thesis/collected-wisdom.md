@@ -7,7 +7,7 @@ __Terminolgy: microprozessor vs microcontroller vs SoC vs ASIC vs FPGA__
 - ASIC: "Application specific integrated circuit": designed for a certain purpose: often include a microcontroller; 
 - FPGA: "Field Programmable gate array": a general purpose IC with logical elements that can be configured (and always reconfigured) with a HDL: can be programmed simulate a softcore-microprocessor; often a FPGA is used for prototyping and then once a design is verified it's created in hardware as an ASIC; useful in security critical areas to verify the microprocessor (everything is transparent)
 
-__FPGA Clock__
+__FPGA Clock__   
 https://hardwarebee.com/ultimate-guide-fpga-clock/
 - signal inside any digital circuit that determines how fast a flip flop (or a group of flip flops) runs
 - clock signal is connected to all flip flops and RAM blocks and activates them according to the clock frequency
@@ -17,7 +17,7 @@ https://hardwarebee.com/ultimate-guide-fpga-clock/
 - PLL: "phase locked loop" takes the reference clock and spins it up to generate a very high frequency -> can manipulate the code to change how often your clock enabler gets pulsed 
 - but: multiple clock domains can get difficult if you want to transfer data between them
 
-__RTL__
+__RTL__   
 - https://www.sciencedirect.com/topics/computer-science/register-transfer-level
   - in context of fpga design: __register transfer level__
   >  low level of abstraction allowing the description of a specific digital circuit. RTL can also be used to mean a hardware description language (VHDL, Verilog, SystemC), where “RTL” code is a lower level of abstraction than “Behavioral Level” code, although both are actually subsets of the full scope of HDL languages.
@@ -29,7 +29,7 @@ __RTL__
      - Behavioral Level: describe the chip that is intended to be sythesized, but more abstract, does not imply clocking, architecture-independent
      - RTL: low level, similar to design description on a schematic; fully specified clocks combinatorial logic between flip-flops, "technology independent (retargetable to different device families)" but architecture fixed  
 
-__Scala__
+__Scala__    
 - https://docs.scala-lang.org/overviews/scala-book/prelude-taste-of-scala.html
 - high level programming language
 - statically typed; supports OOP paradigm and functional paradigm
@@ -57,7 +57,7 @@ __SpinalDHL__
   ```
   - [SpinalHDL vs Chisel:](https://github.com/SpinalHDL/SpinalHDL/issues/202): more from an IC hardware engineer PoW: clear module devision and conceptual design in line with hardware development; SpinalHDL is strongly typed
 
-__RISC V__
+__RISC V__    
 https://www.youtube.com/watch?v=mD-njD2QKN0
 - RISC: "Reduces Instruction Set"
   - in general, instructions are usually implemented in hardware, reduced means that more instructions are necessary ("more lines of assembly code") since the instruction perform rather basic operations, and more RAM is used, but the hardware is less complex -> emphasis on software ([RISC vs CISC](https://cs.stanford.edu/people/eroberts/courses/soco/projects/risc/risccisc/)); today, only Intel x86 use CISC
@@ -67,7 +67,7 @@ https://www.youtube.com/watch?v=mD-njD2QKN0
 - open source instruction set architecture (the most common ISAs like ARM and x86 are patented) which is great for SoCs in out "PostPC era"
 - OpenRISC: didn't separate architecture and implementation; "too early, came up in the PC era"
 - three base integer ISAs, one per address width (RV32I, RV64I, RV128I), <50 hardware instructions needed
-- very modular: can optionally add extensions like privileged instructions, instructions for multiplication, compressed instructions, atomic instructions, etc
+- very modular: can optionally add extensions like privileged instructions, instructions for multiplication, compressed instructions, atomic instructions, etc    
 https://www.youtube.com/watch?v=kNsWipR1MWM
 - simple base, modular, stable, community designed
 - clear separation between user and privileged IS; avoids architecture or technology-dependent features
