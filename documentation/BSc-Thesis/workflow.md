@@ -83,3 +83,14 @@ __2020-12-27__:
 - try to open the iccfpga-rv project in Vivado (Xilinx Software for development on their FPGAs), but need to update version etc, and right now too complex because I am not familiar with Vivado
 - try to connect to virtual cable server on the raspberry pi with Vivado (iccfpga-utils provide a script for that) -> VCS on raspberry works but Vivado somehow doesn't detect it at the Raspberries IP address + port
 - Discovered Linux-on-litex-vexriscv, going to look into that further since it is compatible with Spartan &
+
+__2020-12-28__:
+- follow steps from linux-on-litex-vexriscv on the raspberry pi, but the riscv toolchain is for 64bit and not the 32bit raspberry: `/bin/sh: 1: riscv64-unknown-elf-gcc: Exec format error`.
+
+__2020-12-29__:
+- compiling the riscv multilib toolchain myself from the [source](https://github.com/riscv/riscv-gnu-toolchain)
+- follow steps from linux-on-litex-vexriscv on my Ubuntu laptop
+  - error: No such file or directory: 'images/Image': solved by copying the [precompiled linux and openSBI images](https://github.com/litex-hub/linux-on-litex-vexriscv/issues/164) to the `images/` directory
+  - error: `event2/listener.h: No such file or directory`: solved by installing `libevent-dev` 
+  - error: `json-c/json.h: No such file or directory`: solve by installing `libjson-c-dev`
+  - Simulation worked on my Ubuntu Laptop! Now I have to figure out how to do that on the raspberry pi / load it to the FPGA
