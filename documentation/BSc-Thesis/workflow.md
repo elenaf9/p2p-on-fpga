@@ -93,4 +93,11 @@ __2020-12-29__:
   - error: No such file or directory: 'images/Image': solved by copying the [precompiled linux and openSBI images](https://github.com/litex-hub/linux-on-litex-vexriscv/issues/164) to the `images/` directory
   - error: `event2/listener.h: No such file or directory`: solved by installing `libevent-dev` 
   - error: `json-c/json.h: No such file or directory`: solve by installing `libjson-c-dev`
-  - Simulation worked on my Ubuntu Laptop! Now I have to figure out how to do that on the raspberry pi / load it to the FPGA
+  - Simulation worked on my Ubuntu Laptop! Now I have to figure out how to do that on the raspberry pi / load it to the FPGA  
+    
+
+__2021-01-03__:
+  - downloaded [riscv32-unknown-elf-gcc](https://freebsd.pkgs.org/13/freebsd-armv7/riscv32-unknown-elf-gcc-8.4.0_2.txz.html) to raspberry, simulation from `linux-on-litex-vexriscv` starts, but crashes since it the command `riscv32-unknown-elf-gcc` is still not found
+  - tried build the bitstream `./make.py --board=arty_s7 --cpu-count=2 --build` but error: `litex.build.generic_platform.ConstraintError: Resource not found: spisdcard:None`
+  - double checked with iccfpga-rv: `.flash_core` also tries to flash the spi and fails with error `TDO mismatch`. This is not the same error that I was struggling with at the beginning (the other scripts like `upload_core` now work), but this error message also happens on Raspberry PI 4 (I am using RPi 3 though) according to Thomas Pototschnig. Apparently there the problem is that you can only flash as single time after a reset and afterwards this problem happens. Changed the Pi and tried with RPi 4, somehow flashing the iccfpga core works (at least the first time after a boot) but building the bitstream still doesn't work.
+
