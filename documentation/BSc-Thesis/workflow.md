@@ -40,7 +40,7 @@ __2020-12-14__:
 > NOTE: This method to setup WiFi must be completed before you boot this card for the first time. This is the point at which the system checks for the wpa_supplicant.conf file. If you have already booted the card you will need to re-write with a fresh image and continue  
 -> Probably the reason why it sometimes didnt connect to the wifi, since I overwrote the image quite often and didn't always immediatly added the necessary files to /boot
 - rewrote image to SD card, this time using `RASPBERRY PI OS LITE (32-BIT)` because no need for desktop applications anyway, and adding files to /boot before booting for the first time
-- set environment variables LC_ALL and LANGUAGE 
+- follow the setup steps from __2020-12-12__ again and set environment variable LC_ALL by adding the line `export  LC_ALL=en_US.UTF-8` at the bottom of the `.bashrc` 
 - research the TDO error:
   - according to [this](https://www.allaboutcircuits.com/technical-articles/introduction-to-jtag-test-access-port-tap/) it is a problem with the JTAG Test data output (TDO)
   - try use another iccfpga v1.1, same problem
@@ -49,12 +49,13 @@ __2020-12-14__:
 
 __2020-12-15__:
 - help from Thomas Pototschnig: 
-  - TDO missmatch apparently a know problem because of how Raspberry Pi 4 is initialising it's GPIO pins.
+  - TDO missmatch apparently a know problem because of how Raspberry Pi 4 is initializing it's GPIO pins.
   - Plan B: use Xilinx USB programmer. Problem: I dont have a USB-B cable that is needed for that, will have to order one
   - attempt to give him ssh access to my raspberry, fails because router firewall doesn't allow it  
 
 __2020-12-16__:
-- Configured wireguard VPN server on a publicly available address -> remote access to the RPi + ICCFPGA finally works
+- Configured wireguard VPN server on a publicly available address -> remote access to the RPi + ICCFPGA works
+- Gave remote access to Thomas, but unfortunately he was also not able to find the source of the TDO error. The above mentioned problem about how the Raspberry Pi 4 initializes it's GPIO pins is not the reason in my case.
 - Warning: ICCFPGA can cause Raspberry Pi 4s to break, "probably the pmod-pinheaders shorted with the usb / ethernet" 
   - Going to but a Raspberry Pi 3 since apparantly the problem hardly happends there
   - Consider using the dev 2.1 board
@@ -66,7 +67,7 @@ __2020-12-16__:
        - maybe other differences that can cause error in the development?? Not really tested yet
 
 __2020-12-18__:
-- TDO-missmatch error was a mechanical error, the iccfpga-module was not exactly horizontal in the socket because the screws were to tight, now solved, flashing the core firmware was sucessfull
+- TDO-missmatch error was actually a mechanical error, the iccfpga-module was not exactly horizontal in the socket because the screws were to tight, now solved, flashing the core firmware was sucessfull
 - `./start_serial` not successful, error `cannot open /dev/ttyS0: no fuch file or directory`
 
 __2020-12-24__:
@@ -74,8 +75,17 @@ __2020-12-24__:
 - starting serial still not successful
 
 __2020-12-25__:
-- Enabled serial interface in the raspi-config file, which I already did at some point before on the PI 4, but seems like I didn't do it correctly/ flashed a new image afterwards and forgot to do it again/ ... 
-- Starting serial picocom terminal now successful, commands described in the quickstart work
+- Enabled serial interface in the raspi-config file which I already did at some point before on the PI 4, but seems like I didn't do it correctly/ flashed a new image afterwards and forgot to do it again/ ... 
+   - `sudo raspi-config`
+   - \> 3 Interface Options \> P6 Serial Port
+   - disable shell over serial
+   - enable serial port hardware 
+- Starting serial picocom terminal (`/iccfpga-rv/iccfpga-utils/raspberry_scripts/start_serial.sh`) now successful, commands described in the quickstart work:
+   ```sh
+   { "command":"version"}
+   # Response
+   {"version":"0.07rv","command":"version","duration":0,"code":200}
+   ```
 - Next step figure out how to run a binary on the soft-riscv-cpu
 -> Decide to start from the bottom and get started with Vivado to hopefully eventually understand the whole VexRiscV blackbox
 
@@ -88,16 +98,38 @@ __2020-12-28__:
 - follow steps from linux-on-litex-vexriscv on the raspberry pi, but the riscv toolchain is for 64bit and not the 32bit raspberry: `/bin/sh: 1: riscv64-unknown-elf-gcc: Exec format error`.
 
 __2020-12-29__:
-- compiling the riscv multilib toolchain myself from the [source](https://github.com/riscv/riscv-gnu-toolchain)
-- follow steps from linux-on-litex-vexriscv on my Ubuntu laptop
+- compiling the riscv multilib toolchain myself from the [source](https://github.com/riscv/riscv-gnu-toolchain) for riscv32 on my host Ubuntu laptop
+```sh
+git clone https://github.com/riscv/riscv-gnu-toolchain.git
+cd riscv-gnu-toolchain
+# install prerequisites
+sudo apt-get install autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev
+./configure --prefix=/opt/riscv --with-arch=rv32gc --with-abi=ilp32d
+make linux
+```
+- follow steps from linux-on-litex-vexriscv on my Ubuntu laptop and run LiteX simulation
   - error: No such file or directory: 'images/Image': solved by copying the [precompiled linux and openSBI images](https://github.com/litex-hub/linux-on-litex-vexriscv/issues/164) to the `images/` directory
   - error: `event2/listener.h: No such file or directory`: solved by installing `libevent-dev` 
   - error: `json-c/json.h: No such file or directory`: solve by installing `libjson-c-dev`
   - Simulation worked on my Ubuntu Laptop! Now I have to figure out how to do that on the raspberry pi / load it to the FPGA  
-    
 
 __2021-01-03__:
-  - downloaded [riscv32-unknown-elf-gcc](https://freebsd.pkgs.org/13/freebsd-armv7/riscv32-unknown-elf-gcc-8.4.0_2.txz.html) to raspberry, simulation from `linux-on-litex-vexriscv` starts, but crashes since it the command `riscv32-unknown-elf-gcc` is still not found
-  - tried build the bitstream `./make.py --board=arty_s7 --cpu-count=2 --build` but error: `litex.build.generic_platform.ConstraintError: Resource not found: spisdcard:None`
-  - double checked with iccfpga-rv: `.flash_core` also tries to flash the spi and fails with error `TDO mismatch`. This is not the same error that I was struggling with at the beginning (the other scripts like `upload_core` now work), but this error message also happens on Raspberry PI 4 (I am using RPi 3 though) according to Thomas Pototschnig. Apparently there the problem is that you can only flash as single time after a reset and afterwards this problem happens. Changed the Pi and tried with RPi 4, somehow flashing the iccfpga core works (at least the first time after a boot) but building the bitstream still doesn't work.
+- downloaded [riscv32-unknown-elf-gcc](https://freebsd.pkgs.org/13/freebsd-armv7/riscv32-unknown-elf-gcc-8.4.0_2.txz.html) to raspberry, simulation from `linux-on-litex-vexriscv` starts, but crashes since it the command `riscv32-unknown-elf-gcc` is still not found
+- tried build the bitstream `./make.py --board=arty_s7 --cpu-count=2 --build` but error: `litex.build.generic_platform.ConstraintError: Resource not found: spisdcard:None`
+- double checked with iccfpga-rv: `.flash_core` also tries to flash the spi and fails with error `TDO mismatch`. This is not the same error that I was struggling with at the beginning (the other scripts like `upload_core` now work), but this error message also happens on Raspberry PI 4 (I am using RPi 3 though) according to Thomas Pototschnig. Apparently there the problem is that you can only flash as single time after a reset and afterwards this problem happens. Changed the Pi and tried with RPi 4, somehow flashing the iccfpga core works (at least the first time after a boot) but building the bitstream still doesn't work.  
 
+__2021-01-05__
+- after talking to Thomas I realized that linux will not run on the iccfpga hardware that I am using because it only has about 260kB of memory, which is not enough for linux. linux-on-litex-vexriscv is compartible with the ArtyS7 board that uses the same  Xilinx Spartan7 XC7S50 FPGA that the iccfpga does, but the ArtyS7 has 16-bits 256MB DDR3 RAM, which the iccfpga hardware does not. Therefore I will shift my focus away from running linux and think about alternative solutions:
+   - run rust embedded on VexRiscv with no linux on top: this means that my code would have to support `no_std`, which causes some problems
+   - shift my thesis topic and implement the p2p-network on the RaspberryPi, and only use the fpga for encryption by flashing the iccfpga-core without doing any own work with the fpga
+   - buy a ArtS7 Board  
+
+Right now I will look further into VexRiscv if I can at least get this to run; will talk with my Prof soon to talk about the above problem
+- managed to run the virtual cable server with the script `./start_xvc_server.sh` within the raspberry scripts of the iccfpga project, and successfully connected to that with Vivado. This should enable generating and flashing bitstreams to the fpga from a project in vivado
+- generated VexRiscv CPU following the VexRiscv README and opened the created VexRiscv.v file in Vivado, but could not run implementation for the selected target `xc7s50ftgb196-1` that should be used according the fpga that I have. The reason for this is that the `xc7s50ftgb196-1` only allows 100 I/O pins, but VexRiscv is using more than that (tried the full VexRiscv as well as the smallest gen, but same error on both). If I try to add the sources of the iccfpga-rv project (and disable the VexRiscv source that i tried before), the same error occurs.
+- tried to open the iccfpa-rv in a seperate project in Vivado by opening the project file `iccfpga-core/iccfpga/iccfpga.xpr`, but this causes multiple errors:
+  - error: ` [IP_Flow 19-993] Could not find IP file for IP 'mem_128k'.`
+  - warning: ` [IP_Flow 19-5097] Unable to determine VLNV from IP file; verify it has the correct syntax:`
+  - warning: ` [IP_Flow 19-3577] Failed to recreate IP instance 'design_iccfpga_riscvwrapper_0_0'. Error during subcore creation.`
+  - When opening the block design: claims that some ip files are not up-to-date anymore; tried update them but this causes multiple different errors. Read section in the iccfpga-core wiki about the [setup](https://gitlab.com/iccfpga/iccfpga-core/-/wikis/setup.), there it states that Vivado version 2018-2 should be used (I am currently using 2020.2), so I decided to switch to that older version.
+- tried to add mem_128k by adding `iccfpga-core/iccfpga/iccfpga.ip_user_files/mem_init_files/mem_128k_rom.mif` as a source, but unfortunately this doesn't fix the issue.
