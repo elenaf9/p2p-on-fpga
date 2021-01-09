@@ -75,7 +75,7 @@ __2020-12-24__:
 - starting serial still not successful
 
 __2020-12-25__:
-- Enabled serial interface in the raspi-config file which I already did at some point before on the PI 4, but seems like I didn't do it correctly/ flashed a new image afterwards and forgot to do it again/ ... 
+- Enabled serial interface in the raspi-config file, which I already did at some point before on the PI 4, but seems like I didn't do it correctly/ flashed a new image afterwards and forgot to do it again/ ... 
    - `sudo raspi-config`
    - \> 3 Interface Options \> P6 Serial Port
    - disable shell over serial
@@ -91,8 +91,8 @@ __2020-12-25__:
 
 __2020-12-27__:
 - try to open the iccfpga-rv project in Vivado (Xilinx Software for development on their FPGAs), but need to update version etc, and right now too complex because I am not familiar with Vivado
-- try to connect to virtual cable server on the raspberry pi with Vivado (iccfpga-utils provide a script for that) -> VCS on raspberry works but Vivado somehow doesn't detect it at the Raspberries IP address + port
-- Discovered Linux-on-litex-vexriscv, going to look into that further since it is compatible with Spartan &
+- try to connect to virtual cable server on the raspberry pi with Vivado (iccfpga-utils provide a script for that) -> VCS on raspberry works but Vivado somehow doesn't detect it at the Raspberries IP address + port (*Update from 2021-01-05: the problem was that I tried to connect to a "remote server", but the server actually is a local server that connects to a remote Xilinx Virtual Server Cable. The correct steps are `Hardware Manager -> Open Target -> Local Server -> Add Xilinx Virtual Cable -> <host_name>, port: 2542`*))
+- Discovered Linux-on-litex-vexriscv, going to look into that further since it is compatible with Spartan 7 (*Update from 2021-1-09: it is compartible with the Arty s7 uses the same Spartan 7 FPGA like the iccfpa, but this doesn't mean that it is compartible with the iccfpga, since the Arty s7 uses different port, and has peripherals like ddram that the iccfpga doesn't have*)
 
 __2020-12-28__:
 - follow steps from linux-on-litex-vexriscv on the raspberry pi, but the riscv toolchain is for 64bit and not the 32bit raspberry: `/bin/sh: 1: riscv64-unknown-elf-gcc: Exec format error`.
@@ -117,14 +117,14 @@ __2021-01-03__:
 - downloaded [riscv32-unknown-elf-gcc](https://freebsd.pkgs.org/13/freebsd-armv7/riscv32-unknown-elf-gcc-8.4.0_2.txz.html) to raspberry, simulation from `linux-on-litex-vexriscv` starts, but crashes since it the command `riscv32-unknown-elf-gcc` is still not found
 - tried build the bitstream `./make.py --board=arty_s7 --cpu-count=2 --build` but error: `litex.build.generic_platform.ConstraintError: Resource not found: spisdcard:None`
 - double checked with iccfpga-rv: `.flash_core` also tries to flash the spi and fails with error `TDO mismatch`. This is not the same error that I was struggling with at the beginning (the other scripts like `upload_core` now work), but this error message also happens on Raspberry PI 4 (I am using RPi 3 though) according to Thomas Pototschnig. Apparently there the problem is that you can only flash as single time after a reset and afterwards this problem happens. Changed the Pi and tried with RPi 4, somehow flashing the iccfpga core works (at least the first time after a boot) but building the bitstream still doesn't work.  
+*Update from 2020-09-01: the spisdcard constraint error has nothing to do with the TDO missmatch or anything, but happends because I was building for the arty_s7, which does have the same FPGA as the iccfpga, but completely different ports, therefore the spicard was not found at the port that was hardcoded for the arty s7*
 
 __2021-01-05__
 - after talking to Thomas I realized that linux will not run on the iccfpga hardware that I am using because it only has about 260kB of memory, which is not enough for linux. linux-on-litex-vexriscv is compartible with the ArtyS7 board that uses the same  Xilinx Spartan7 XC7S50 FPGA that the iccfpga does, but the ArtyS7 has 16-bits 256MB DDR3 RAM, which the iccfpga hardware does not. Therefore I will shift my focus away from running linux and think about alternative solutions:
    - run rust embedded on VexRiscv with no linux on top: this means that my code would have to support `no_std`, which causes some problems
    - shift my thesis topic and implement the p2p-network on the RaspberryPi, and only use the fpga for encryption by flashing the iccfpga-core without doing any own work with the fpga
    - buy a ArtS7 Board  
-
-Right now I will look further into VexRiscv if I can at least get this to run; will talk with my Prof soon to talk about the above problem
+-> Right now I will look further into VexRiscv if I can at least get this to run; will talk with my Prof soon to talk about the above problem
 - managed to run the virtual cable server with the script `./start_xvc_server.sh` within the raspberry scripts of the iccfpga project, and successfully connected to that with Vivado. This should enable generating and flashing bitstreams to the fpga from a project in vivado
 - generated VexRiscv CPU following the VexRiscv README and opened the created VexRiscv.v file in Vivado, but could not run implementation for the selected target `xc7s50ftgb196-1` that should be used according the fpga that I have. The reason for this is that the `xc7s50ftgb196-1` only allows 100 I/O pins, but VexRiscv is using more than that (tried the full VexRiscv as well as the smallest gen, but same error on both). If I try to add the sources of the iccfpga-rv project (and disable the VexRiscv source that i tried before), the same error occurs.
 - tried to open the iccfpa-rv in a seperate project in Vivado by opening the project file `iccfpga-core/iccfpga/iccfpga.xpr`, but this causes multiple errors:
@@ -133,3 +133,10 @@ Right now I will look further into VexRiscv if I can at least get this to run; w
   - warning: ` [IP_Flow 19-3577] Failed to recreate IP instance 'design_iccfpga_riscvwrapper_0_0'. Error during subcore creation.`
   - When opening the block design: claims that some ip files are not up-to-date anymore; tried update them but this causes multiple different errors. Read section in the iccfpga-core wiki about the [setup](https://gitlab.com/iccfpga/iccfpga-core/-/wikis/setup.), there it states that Vivado version 2018-2 should be used (I am currently using 2020.2), so I decided to switch to that older version.
 - tried to add mem_128k by adding `iccfpga-core/iccfpga/iccfpga.ip_user_files/mem_init_files/mem_128k_rom.mif` as a source, but unfortunately this doesn't fix the issue.
+  
+__2021-01-09__
+- more research on alternative solutions:
+  - could use the `no_std` crate [smoltcp](https://github.com/smoltcp-rs/smoltcp) for tcp/ip stack on bare-metal systems and do some hacky things to send the messages over uart to the pi and try to configure the pi to forward the messages between fpga and internet.
+  - could buy a [bluetooth interface](http://store.digilentinc.com/pmod-bt2-bluetooth-interface/) for the iccfpga and implement the p2p communication with bluetooth. Would be a way lower range but theoretically possible according to [this](https://rust-embedded.github.io/discovery/11-usart/index.html)
+   - buy the [Arty A7](https://store-7gavg.mybigcommerce.com/arty-a7-artix-7-fpga-development-board-for-makers-and-hobbyists/) and not the ArtyS7 that I considered before, since the Arty A7 has ethernet connection. This would mean that my work then would be completely independent of the iccfpa/ IOTA hardware and have the benefit that I can always buy new pmods to extend my project.
+- checked again linux-on-litex-vexriscv just to try one last time if there is any chance to run it on the iccfpga: definitely not possible the way that it is right now because the ddram is essential and also the arty\_s7  ports don't match the one's of the iccfpga, so I would have to write a completely new configuration for my platform and ports.
