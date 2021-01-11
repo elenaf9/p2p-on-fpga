@@ -140,3 +140,14 @@ __2021-01-09__
   - could buy a [bluetooth interface](http://store.digilentinc.com/pmod-bt2-bluetooth-interface/) for the iccfpga and implement the p2p communication with bluetooth. Would be a way lower range but theoretically possible according to [this](https://rust-embedded.github.io/discovery/11-usart/index.html)
    - buy the [Arty A7](https://store-7gavg.mybigcommerce.com/arty-a7-artix-7-fpga-development-board-for-makers-and-hobbyists/) and not the ArtyS7 that I considered before, since the Arty A7 has ethernet connection. This would mean that my work then would be completely independent of the iccfpa/ IOTA hardware and have the benefit that I can always buy new pmods to extend my project.
 - checked again linux-on-litex-vexriscv just to try one last time if there is any chance to run it on the iccfpga: definitely not possible the way that it is right now because the ddram is essential and also the arty\_s7  ports don't match the one's of the iccfpga, so I would have to write a completely new configuration for my platform and ports.
+  
+__2020-01-10__
+- write first `no_std` rust programm for bare metal riscv with instructions from the [riscv_rt crate](https://docs.rs/riscv-rt/0.8.0/riscv_rt/index.html) and another project I found that runs [Rust embedded on VexRiscV CPU](https://craigjb.com/2020/01/22/ecp5/)
+  - used memory mapping from iccfpga manual, problem is that I dont know the exact address of led to get it to blink
+  - compiled for target `riscv32imac-unknown-none-elf`
+- try upload compiled rust program to the iccfpga core according to the manual 9.3 "Uploading RISC-V Firmware to the ICCFPGA module, using OpenOCD on a Raspberry Pi", 
+  - no error, but also no LED blinking to verify that it was success
+  - manual is quite unspecific what exactly can be loaded into the fpga with this script, could be that my attempt to just upload that compiled rust code is way too naive
+- managed to start openOCD server on raspberry pi
+  - managed dial it with gdb but openODC accepts and then immediately drops connection, gdb shows warning `warning: No executable has been specified and target does not support determining executable automatically`
+  - managed to connect with telnet 
