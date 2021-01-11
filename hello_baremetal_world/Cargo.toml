@@ -1,0 +1,10 @@
+[package]
+name = "hello_baremetal_world"
+version = "0.1.0"
+authors = ["elenaf9 <elena.frank@protonmail.com>"]
+edition = "2018"
+
+
+[dependencies]
+panic-halt="0.2.0"
+riscv-rt = "0.6.1"
