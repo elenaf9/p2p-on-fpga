@@ -18,20 +18,23 @@ fn delay(cycles: u32) {
 
 fn set_leds(mask: u32) {
     unsafe {
-        *(0xF1030013 as *mut u32) = mask;
+        *(0xf1030000 as *mut u32) = mask << 19; // set bit 19 
     }
 }
 
 #[entry]
 fn main() -> ! {
-    let mut mask = 0x40;
+    let mut mask = 1;
+    unsafe {
+        *(0xf1030008 as *mut u32) = 0; // no alternate functions
+        *(0xf103000c as *mut u32) = 0; // set all bits to out
+        *(0xf1030004 as *mut u32) = !(1<<19); // set bit 19 to out
+    }
     loop {
         set_leds(mask);
-        mask >>= 1;
-        if mask == 0 {
-            mask = 0x40;
-        }
-        delay(300000);
+         mask = if mask == 0 {
+            1
+        } else { 0 };
+        delay(200000);
     }
 }
-

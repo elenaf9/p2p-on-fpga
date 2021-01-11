@@ -151,3 +151,15 @@ __2020-01-10__
 - managed to start openOCD server on raspberry pi
   - managed dial it with gdb but openODC accepts and then immediately drops connection, gdb shows warning `warning: No executable has been specified and target does not support determining executable automatically`
   - managed to connect with telnet 
+
+__2020-01-11__
+- changed `no_std` rust programm `hello_baremetal_world`:
+   - compile with `riscv32imc-unknown-none-elf` instead of `riscv32imac-unknown-none-elf`
+   - LED on, on GPIO pin 19 with instruction `*(0xf1030000 as *mut u32) = 1 << 19)`
+- don't follow the last steps from the manual, only do the openOCD instructions without following `Listing 5: Unreset RISC-V` via telnet
+- LED blinked after following these steps:
+  1. upload\_core.sh (on RPi)
+  2. start\_debugger.sh (on RPi))
+  3. compile rust program on host pc, scp to pi home
+  4. `telnet <Raspberri-pi-ip> 444`
+  5. `> halt` `> reset` `> load_image /home/pi/hello_baremetal_worl 0x00000000` `> resume`
