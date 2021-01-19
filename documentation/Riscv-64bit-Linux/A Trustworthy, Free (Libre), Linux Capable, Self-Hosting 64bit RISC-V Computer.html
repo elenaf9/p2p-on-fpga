@@ -1,0 +1,382 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+    <title>A Trustworthy, Free (Libre), Linux Capable, Self-Hosting 64bit RISC-V Computer</title>
+  </head>
+  <body>
+    <div style="text-align: justify; width: 500pt">
+
+
+<h2>A Trustworthy, Free (Libre), Linux Capable,<br>Self-Hosting 64bit RISC-V Computer</h2>
+<b>Gabriel L. Somlo</b> &lt;somlo at cmu dot edu&gt;, 2019-07-04 &#9135; 2020-05-08
+
+<p>You may skip directly to the <a href="#sec_2">build instructions</a>, or to the <a href="#sec_5">self-hosting demo</a>.
+
+</p><h3><a name="sec_1">1. Preamble</a></h3><a name="sec_1">
+
+My goal is to build a Free/OpenSource computer from the ground up, so I 
+may completely trust that the entire hardware+software system's behavior
+ is 100% attributable to its fully available HDL (Hardware Description 
+Language) and Software sources.<br>
+More importantly, I need all the compilers and associated toolchains 
+involved in building the overall system (from HDL and Software sources) 
+to be Free/OpenSource, and to be themselves buildable and runnable on 
+the computer system being described. In other words, I need a </a><a href="https://en.wikipedia.org/wiki/Self-hosting">self-hosting</a> Free/OpenSource hardware+software stack!<p></p>
+
+I don't own or otherwise control a silicon foundry, and therefore can't 
+fabricate my own ASICs, so I will build the "hardware" component of this
+ computer on an FPGA, ensuring that any programming of (and bitstream 
+generation for) the FPGA happens with Free/OpenSource tools. I consider 
+the tradeoff to be worthwhile and advantageous from a trustworthiness 
+standpoint:
+  <ul>
+  <li>The chip foundry wouldn't know what the FPGA will be used for, and
+ where the proverbial "privilege bit" will end up being laid out on the 
+chip, which mitigates against Privilege Escalation hardware backdoors. 
+Exposure is limited to DoS attacks being planted into the silicon during
+ FPGA fabrication, which yields a significantly improved level of 
+assurance (i.e., the computer may stop working altogether, but can't 
+betray its owner to an adversary while <i>pretending</i> to operate correctly).
+  </li><li>The FPGA is a regular grid of identical components, so 
+(destructive) visual inspection (i.e., chemical ablation and TEM 
+imaging) is more feasible than with a dedicated ASIC that has much less 
+visual regularity and repeatability.
+  </li><li>Having thus constrained the fabrication-stage attack surface,
+ I can cover the remaining hardware attack vectors (malicious sources 
+and/or toolchain) by insisting on buildable sources to <i>everything</i>, resulting in a finished product (i.e., deployed hardware+software computer) that is <i>as trustowrthy as</i> its <i>openly auditable</i> HDL+Software sources.
+  </li></ul>
+
+The following is a list of links to additional resources, documents and 
+early experiments related to building the system described above:
+  <ul>
+  <li><a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/glsomlo_cresct_2020.pdf">Paper</a>, <a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/glsomlo_cresct_2020_slides.pdf">Slides</a> and <a href="https://youtu.be/5IhujGl_-K0">Presentation</a> at <a href="https://www.ieee-security.org/TC/SPW2020/CReSCT/">CReSCT 2020</a> (part of <a href="https://www.ieee-security.org/TC/SP2020/">IEEE S&amp;P 2020</a>).
+  </li><li><a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/SeiResearchReview2019btcp.pdf">Slide Deck</a> and <a href="https://www.youtube.com/watch?v=lI6u_fuAP1g">Presentation</a> from CMU/SEI Research Review 2019.
+  </li><li><a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/btcp-update.pdf">Older Slide Deck</a> detailing my Trustworthy Computing work at CERT/SEI.
+  </li><li><a href="https://www.lowrisc.org/">lowRISC project</a> (and my effort to <a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/lowRISC.html">rebase</a> its components to their respective upstream projects
+    <ul>
+    <li>This was a tremendously helpful resource, and understanding its components was a great learning experience;
+    </li><li>However, at the time of this writing, the project relies on
+ a closed-source HDL toolchain, and utilizes proprietary IP modules 
+(e.g., DRAM controller) as part of its component list.
+    </li></ul>
+  </li><li><a href="https://github.com/gsomlo/yoloRISC">yoloRISC</a>: an RV64IMAC, Rocket-Chip based blinky demo SoC, built using <a href="https://github.com/YosysHQ/yosys">yosys</a>/<a href="https://github.com/SymbiFlow/prjtrellis">trellis</a>/<a href="https://github.com/YosysHQ/nextpnr">nextpnr</a> for the <a href="https://www.latticesemi.com/en/Products/DevelopmentBoardsAndKits/ECP55GVersaDevKit">Lattice ECP5 5G Versa</a> development board.
+  </li></ul>
+
+<h3><a name="sec_2">2. Build Instructions for LiteX+RocketChip 64bit SoC</a></h3><a name="sec_2">
+
+</a><h4><a name="sec_2"></a><a name="sec_2_1">2.1. Prerequisites and Ingredients</a></h4><a name="sec_2_1">
+
+This is where we build a complete, Linux-capable 64-bit computer all the
+ way from HDL and Software sources. Here's the main list of ingredients:
+  </a><ul><a name="sec_2_1">
+  </a><li><a name="sec_2_1">CPU Core: </a><a href="https://github.com/chipsalliance/rocket-chip">Rocket Chip</a>
+  </li><li>SoC Environment: <a href="https://github.com/enjoy-digital/litex">LiteX</a>
+  </li><li>Python-based Meta-HDL: <a href="https://github.com/m-labs/migen">Migen</a>
+  </li><li>Verilog Synthesis Front-end: <a href="https://github.com/YosysHQ/yosys">Yosys</a>
+  </li><li>FPGA Progamming Details (Device Database): <a href="https://github.com/SymbiFlow/prjtrellis">Trellis</a>
+  </li><li>FPGA Place and Route tool: <a href="https://github.com/YosysHQ/nextpnr">nextpnr</a>
+  </li><li>Userspace Software Environment: <a href="https://busybox.net/downloads/busybox-1.31.0.tar.bz2">BusyBox</a>
+  </li><li>Kernel: <a href="https://github.com/torvalds/linux">Linux</a>
+  </li><li>Bootloader: <a href="https://github.com/riscv/riscv-pk">BBL</a>
+  </li><li>C Cross-compiler: <a href="https://github.com/riscv/riscv-gnu-toolchain">riscv-gnu-toolchain</a>
+  </li></ul>
+I maintain forks of some of these projects at <a href="https://github.com/gsomlo">https://github.com/gsomlo</a>,
+ with patches in various stages of upstream-readiness. I will use links 
+to these forks in the instructions to follow, with the understanding 
+that they will be <i>rebased</i> as upstreaming work progresses. The end
+ goal is to eventually delete the forks altogether once all changes they
+ contain are merged upstream.
+
+<h4><a name="sec_2_2">2.2. Setup </a></h4><a name="sec_2_2">
+
+</a><h5><a name="sec_2_2"></a><a name="sec_2_2_1">2.2.1. Development Environment</a></h5><a name="sec_2_2_1">
+
+On a recent Fedora x86_64 workstation (e.g., F30), install the following packages:
+<pre>    dnf install \
+        dtc fakeroot perl-bignum \
+        json-c-devel libevent-devel libmpc-devel mpfr-devel \
+        python3-devel python3-migen yosys trellis nextpnr
+</pre>
+I expect packages for other Linux distributions (e.g., Debian, etc.) to be named somewhat similarly. You <i>may</i>
+ have to roll your own in case distro packages are not fresh enough to 
+support the latest features. I recommend the following (or newer) git 
+snapshots for each tool:
+  <ul>
+  <li> Migen: <tt>4c00f5b</tt>
+  </li><li> Yosys: <tt>8b074cc</tt>
+  </li><li> Trellis: <tt>c2cccd2</tt>
+  </li><li> nextpnr: <tt>a957e90</tt>
+  </li></ul>
+
+</a><h5><a name="sec_2_2_1"></a><a name="sec_2_2_2">2.2.2. Building the C Cross-Compiler Toolchain</a></h5><a name="sec_2_2_2">
+
+Pre-built binaries exist for this step, and may be more convenient for quick one-off experimentation. Also, RISC-V support <i>should</i>
+ be fully upstreamed in GCC v.9. However, this offers a nice, 
+self-contained bundle of both the compiler and runtime libraries as a 
+source distribution, and is still fairly recent, so I'm using it for 
+now:
+<pre>    git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
+    pushd riscv-gnu-toolchain
+    ./configure --prefix=$HOME/RISCV --enable-multilib
+    make newlib linux
+    popd
+</pre>
+This may take several hours to build, so it might make sense to start it inside a <tt>screen</tt> session, and have it email you when finished... :)<p></p>
+
+Be sure to add "<tt>$HOME/RISCV/bin</tt>" to your <tt>$PATH</tt>. E.g, in bash:
+<pre>    export PATH=$PATH:$HOME/RISCV/bin
+</pre>
+
+</a><h5><a name="sec_2_2_2"></a><a name="sec_2_2_3">2.2.3. Setting up LiteX</a></h5><a name="sec_2_2_3">
+
+To install the LiteX SoC environment, follow these steps:
+<pre>    mkdir ~/LITEX; cd ~/LITEX
+
+    # LiteX project and its related components (unmodified upstream):
+    # NOTE: This is probably done better in LiteX's *own* installer, maybe
+    #       I should just learn to trust it and stop rolling my own :)
+
+    github_clone () {
+      local ACCNT=$1
+      local PREFIX=$2
+      local PRJLIST=$3
+      for PRJ in $PRJLIST; do
+        /usr/bin/git clone --recursive https://github.com/$ACCNT/$PREFIX$PRJ
+        (cd $PREFIX$PRJ; /usr/bin/python3 setup.py develop --user)
+      done
+    }
+
+    github_clone litex-hub pythondata- 'software-compiler_rt'
+    github_clone enjoy-digital lite 'x eth dram pcie sata sdcard iclink video scope jesd204b'
+    github_clone litex-hub lite 'spi x-boards'
+    github_clone litex-hub pythondata-misc- 'tapcfg'
+    github_clone litex-hub pythondata-cpu- 'lm32 mor1kx picorv32 serv vexriscv rocket'
+</pre>
+LiteX already supports the 64-bit Rocket Chip; this includes a </a><a href="https://github.com/enjoy-digital/rocket-litex-verilog">submodule</a> with pre-generated Verilog files reflecting a few LiteX-specific, configuration-only <a href="https://github.com/gsomlo/rocket-chip/tree/gls-litex">changes to Rocket Chip</a> sources.
+
+<h4><a name="sec_2_3">2.3. Building FPGA Bitstream</a></h4><a name="sec_2_3">
+
+This section shows how to build the "hardware" for our Linux-capable 
+64-bit Rocket+LiteX computer, in the form of FPGA bitstream.
+
+</a><h5><a name="sec_2_3"></a><a name="sec_2_3_1">2.3.1. Building for the </a><a href="https://www.latticestore.com/products/tabid/417/categoryid/59/productid/43172/default.aspx">ecp5versa</a> board</h5>
+
+This board is programmed using completely Free/OpenSource tools (<a href="https://github.com/YosysHQ/yosys">yosys</a>/<a href="https://github.com/SymbiFlow/prjtrellis">trellis</a>/<a href="https://github.com/YosysHQ/nextpnr">nextpnr</a>). To build the bitstream, run:
+<pre>    cd ~/LITEX
+    litex/litex/boards/targets/versa_ecp5.py --build \
+      --yosys-nowidelut \
+      --csr-csv ./csr_ecp5versa.csv \
+      --csr-data-width 32 --sys-clk-freq 60e6 \
+      --with-ethernet \
+      --cpu-type rocket --cpu-variant linuxd
+</pre>
+<b>NOTE</b>: Since nextpnr is stochastic, and our 60MHz timing 
+constraint is on the high side of average, I ran the following loop from
+ a detached <tt>screen</tt> session to eventually get an acceptable solution:
+<pre>    while true; do
+      litex/litex/boards/targets/versa_ecp5.py --build \
+        --yosys-nowidelut --nextpnr-timingstrict \
+        --csr-csv ./csr_ecp5versa.csv \
+        --csr-data-width 32 --sys-clk-freq 60e6 \
+        --with-ethernet \
+        --cpu-type rocket --cpu-variant linuxd
+      if [ "$?" == "0" ]; then
+        echo success | mail -s "success" your@email.here
+        break
+      fi
+    done
+</pre>
+After several iterations, I obtained the following <a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/top.svf">top.svf</a> bitstream file. After connecting your ecp5versa with the serial console, run:
+<pre>    openocd -f /usr/share/trellis/misc/openocd/ecp5-versa5g.cfg \
+            -c "transport select jtag; init; svf top.svf; exit"
+</pre>
+to configure the board. Connect an ethernet cable, and you can successfully download the software via TFTP!
+
+<h5><a name="sec_2_3_2">2.3.2. Building for the </a><a href="https://store.digilentinc.com/nexys-a7-fpga-trainer-board-recommended-for-ece-curriculum/">nexys4ddr</a> board</h5>
+
+This board requires the Vivado toolchain from Xilinx (I use version 
+2018.2), which is proprietary and needs licensing to run. Installation 
+and licensing details for Vivado depend on your local circumstances, and
+ are therefore out of scope for this document.<p></p>
+
+To build the bitstream, run:
+<pre>    cd ~/LITEX
+    litex/litex/boards/targets/nexys4ddr.py --build \
+      --csr-csv ./csr_nexys4ddr.csv \
+      --csr-data-width 32 --sys-clk-freq 75e6 \
+      --with-ethernet \
+      --cpu-type rocket --cpu-variant linux
+</pre>
+When this command completes (after an hour or two), find the file named "<tt>soc_ethernetsoc_nexys4ddr/gateware/top.bit</tt>",
+ and use it to program your nexys4ddr board. Personally, I configured my
+ board to load the bitstream from a microSD card, but there is an option
+ to push the bitstream over the USB console cable, or program it into 
+the on-board SPI flash. The exact details are out of scope for this 
+document, but <a href="https://reference.digilentinc.com/learn/programmable-logic/tutorials/nexys-4-ddr-programming-guide/start">this</a> may help.<p></p>
+
+<h4><a name="sec_2_4">2.4. Preparing the Software Bundle</a></h4><a name="sec_2_4">
+
+Once the FPGA board is programmed, the LiteX "bios" will run through its
+ boot-up sequence, and eventually end up attempting to download software
+ (bundled together as a file named "<tt>boot.bin</tt>") via TFTP. This section describes how to assemble that bundle.
+
+</a><h5><a name="sec_2_4"></a><a name="sec_2_4_1">2.4.1. Building BusyBox</a></h5><a name="sec_2_4_1">
+
+BusyBox is built using </a><a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/busybox-1.31.0-rv64gc.config">busybox-1.31.0-rv64gc.config</a> as its configuration file:
+<pre>    cd ~/LITEX
+    curl https://busybox.net/downloads/busybox-1.31.0.tar.bz2 \
+         | tar xfj -
+    pushd busybox-1.31.0
+    cp ~/busybox-1.31.0-rv64gc.config .config
+    make CROSS_COMPILE=riscv64-unknown-linux-gnu-
+    popd
+</pre>
+
+<h5><a name="sec_2_4_2">2.4.2. Building an Embedded InitRamFS for Linux</a></h5><a name="sec_2_4_2">
+
+Linux can boot from an internally embedded file system, provided to the 
+kernel builder in the form of a CPIO archive file. We use BusyBox to 
+populate the binary folders of this filesystem, and create a few 
+additional device nodes:
+<pre>    cd ~/LITEX
+    mkdir initramfs
+    pushd initramfs
+    mkdir -p bin sbin lib etc dev home proc sys tmp mnt nfs root \
+             usr/bin usr/sbin usr/lib
+    cp ../busybox-1.31.0/busybox bin/
+    ln -s bin/busybox ./init
+    cat &gt; etc/inittab &lt;&lt;- "EOT"
+::sysinit:/bin/busybox mount -t proc proc /proc
+::sysinit:/bin/busybox mount -t tmpfs tmpfs /tmp
+::sysinit:/bin/busybox mount -t sysfs sysfs /sys
+::sysinit:/bin/busybox --install -s
+/dev/console::sysinit:-/bin/ash
+EOT
+    fakeroot &lt;&lt;- "EOT"
+mknod dev/null c 1 3
+mknod dev/tty c 5 0
+mknod dev/zero c 1 5
+mknod dev/console c 5 1
+mknod dev/mmcblk0 b 179 0
+mknod dev/mmcblk0p1 b 179 1
+mknod dev/mmcblk0p2 b 179 2
+find . | cpio -H newc -o &gt; ../initramfs.cpio
+EOT
+    popd
+    rm -rf initramfs
+</pre>
+For added convenience, download the resulting file here: </a><a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/initramfs.cpio">initramfs.cpio</a><br>
+<b>NOTE:</b> BusyBox is merely a quick, conveninent way to demonstrate 
+the system's functionality. A more elaborate initial root file system, 
+e.g., one that pivots to mounting a complete Linux distro such as Fedora
+ or Debian could be conceivably loaded instead, for a more 
+feature-complete Linux experience!
+
+<h5><a name="sec_2_4_3">2.4.3. Building the Linux Kernel</a></h5><a name="sec_2_4_3">
+
+Now that we have the initial root file system containing userspace utilities, we may proceed to build the kernel:
+<pre>    cd ~/LITEX
+    git clone https://github.com/litex-hub/linux.git
+    pushd linux
+    git checkout litex-rocket-rebase
+    cp ../initramfs.cpio .
+    make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- \
+         litex_rocket_defconfig litex_rocket_initramfs.config
+    make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu-
+    popd
+</pre>
+<b>NOTE:</b> I added a LiteX-specific default kernel configuration file,
+ and a driver for the LiteETH network interface (originally authored by 
+Joel Stanley for the 32-bit "<tt>linux-on-litex-vexriscv</tt>" project); The kernel is otherwise <i>unchanged</i> from upstream, with no out-of-tree "hacks" whatsoever!
+
+</a><h5><a name="sec_2_4_3"></a><a name="sec_2_4_4">2.4.4. Building BBL</a></h5><a name="sec_2_4_4">
+
+Somewhat improperly named, the Berkeley Boot Loader (BBL) is actually a 
+machine (M) mode "hypervisor" of sorts, providing handlers for traps 
+that the kernel, running in supervisor (S) mode, can not handle itself. 
+In our particular situation, the CPU core lacks an FPU, but we still 
+want the kernel (and userspace above it) to <i>think</i> floating point 
+operations are supported. When an FP opcode comes up for execution, the 
+resulting "invalid opcode" fault is punted all the way into M-mode, 
+where BBL emulates the operation via its software trap handler. 
+Similarly, the kernel's hvc/sbi console driver traps into M-mode, where 
+BBL services character output to (and input from) the serial console.<p></p>
+
+Here's how to build BBL, with the Linux kernel from the previous step as its "payload":
+<pre>    cd ~/LITEX
+    git clone https://github.com/gsomlo/riscv-pk
+    pushd riscv-pk
+    git checkout gls-litex
+    mkdir build
+    cd build
+    ../configure --host=riscv64-unknown-linux-gnu \
+                 --with-arch=rv64imac \
+                 --with-payload=../../linux/vmlinux \
+                 --with-dts=../machine/litex_rocket.dts \
+                 --enable-logo
+    make bbl
+    riscv64-unknown-linux-gnu-objcopy -O binary bbl ~/LITEX/boot.bin
+    popd
+</pre>
+The resulting "<tt>boot.bin</tt>" file must be made available from a 
+TFTP server, so that the LiteX "bios" can download and execute it. 
+Booting from a µSD card (in SPI mode) is also currently supported.<br>
+For added convenience, download the resulting file here: </a><a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/boot.bin">boot.bin</a><br>
+
+<h3><a name="sec_3">3. Demo</a></h3><a name="sec_3">
+
+This is a screen capture of a terminal booting RV64IMAC Litex+RocketChip
+ on a nexys4ddr board. The system was built using the instructions 
+above. The video shows the kernel version, userspace/kernel view of the 
+supported CPU model ("f" and "d" are emulated by BBL), and demonstrates 
+the ability of the network interface to send and receive packets:<br>
+<embed src="A%20Trustworthy,%20Free%20(Libre),%20Linux%20Capable,%20Self-Hosting%2064bit%20RISC-V%20Computer_files/LitexRocketLinux64.mp4" autostart="false" width="700" height="550">
+
+</a><h3><a name="sec_3"></a><a name="sec_4">4. Building ecp5versa Bitstream Natively (on rv64gc)</a></h3><a name="sec_4">
+
+Following </a><a href="https://fedoraproject.org/wiki/Architectures/RISC-V/Installing">these instructions</a>, set up the latest available "<a href="https://dl.fedoraproject.org/pub/alt/risc-v/disk-images/fedora/rawhide/">Rawhide image</a>" as either a <a href="https://fedoraproject.org/wiki/Architectures/RISC-V/Installing#Boot_with_libvirt">libvirt</a> or <a href="https://fedoraproject.org/wiki/Architectures/RISC-V/Installing#Boot_under_QEMU">QEMU</a> guest.<p></p>
+
+Next, follow the instructions shown in Subsections <a href="#sec_2_2_1">2.2.1</a> and <a href="#sec_2_2_3">2.2.3</a> to install the development environment, including the hardware toolchain and LiteX.<p></p>
+
+Finally, build a Linux-capable riscv64 LiteX/Rocket SoC bitstream for 
+the ecp5versa board, natively on Fedora-riscv64, by repeating the 
+instructions given in Section <a href="#sec_2_3_1">2.3.1</a>.<p></p>
+
+Check out the build process <a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/screenlog.0">log</a>, the resulting (55MHz capable) <a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/top-native.svf">bitstream</a> file, and a screen capture of Linux booting on the ecp5versa board programmed with the natively built bitstream:<br>
+<embed src="A%20Trustworthy,%20Free%20(Libre),%20Linux%20Capable,%20Self-Hosting%2064bit%20RISC-V%20Computer_files/LitexRocketVersaNative.mp4" autostart="false" width="700" height="900">
+
+<h3><a name="sec_5">5. The Full Self-Hosting Demo</a></h3><a name="sec_5">
+
+I built bitstream for a </a><a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/trellis.mp4">Trellis</a>
+<a href="https://github.com/daveshah1/TrellisBoard">Board</a>, using
+the following steps:
+<pre>    cd ~/LITEX
+    litex-boards/litex_boards/targets/trellisboard.py --build \
+      --yosys-nowidelut \
+      --csr-csv ./csr_trellisboard.csv \
+      --csr-data-width 32 --sys-clk-freq 60e6 \
+      --with-ethernet --with-spi-sdcard \
+      --cpu-type rocket --cpu-variant linuxq
+</pre>
+
+I then mounted a root filesystem cloned from my
+<a href="https://fedoraproject.org/wiki/Architectures/RISC-V">Fedora-rv64 VM</a>
+using the (slow) SPI-based µSD card, and managed to get the HDL toolchain
+components (yosys and nextpnr-ecp5) running, which means that, technically, this
+computer is indeed capable of self-hosting!<p></p>
+
+Here's a demo video of LiteX+Rocket launching its own HDL tool chain from the
+Fedora root filesystem on the µSD card:<br>
+<embed src="A%20Trustworthy,%20Free%20(Libre),%20Linux%20Capable,%20Self-Hosting%2064bit%20RISC-V%20Computer_files/LitexRocketSelfHosting.mp4" autostart="false" width="700" height="900">
+Check out the <a href="http://www.contrib.andrew.cmu.edu/~somlo/BTCP/LitexRocketSelfHosting.log">transcript</a> if you don't want to wait for the slow video!
+
+<h3><a name="sec_6">6. Future Work</a></h3><a name="sec_6">
+
+<ul>
+  <li> Faster µSD card access (port LiteSDCard to the TrellisBoard)
+  </li><li> Other LiteX optimizations
+  </li><li> Once <tt>nextpnr-xilinx</tt> becomes available, deploy on a faster FPGA?
+</li></ul>
+
+  
+
+</a></div></body></html>
