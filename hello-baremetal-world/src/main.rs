@@ -25,13 +25,14 @@ fn set_leds(mask: u32) {
 #[entry]
 fn main() -> ! {
     let mut mask = 1;
+    /*
     unsafe {
         *(0xf1030008 as *mut u32) = 0; // no alternate functions
         *(0xf103000c as *mut u32) = 0; // set all bits to out
         *(0xf1030004 as *mut u32) = !(1<<19); // set bit 19 to out
-    }
+    }*/
     loop {
-        set_leds(mask);
+        // set_leds(mask);
          mask = if mask == 0 {
             1
         } else { 0 };
