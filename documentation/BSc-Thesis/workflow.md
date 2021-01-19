@@ -153,7 +153,7 @@ __2020-01-10__
   - managed to connect with telnet 
 
 __2020-01-11__
-- changed `no_std` rust programm `hello_baremetal_world`:
+- changed `no_std` rust programm `hello-baremetal-world`:
    - compile with `riscv32imc-unknown-none-elf` instead of `riscv32imac-unknown-none-elf`
    - LED on, on GPIO pin 19 with instruction `*(0xf1030000 as *mut u32) = 1 << 19)`
 - don't follow the last steps from the manual, only do the openOCD instructions without following `Listing 5: Unreset RISC-V` via telnet
@@ -162,4 +162,80 @@ __2020-01-11__
   2. start\_debugger.sh (on RPi))
   3. compile rust program on host pc, scp to pi home
   4. `telnet <Raspberri-pi-ip> 444`
-  5. `> halt` `> reset` `> load_image /home/pi/hello_baremetal_worl 0x00000000` `> resume`
+  5. `> halt` `> reset` `> load_image /home/pi/hello-baremetal-world 0x00000000` `> resume`
+
+__2021-01-15__
+- New Hardware: [Xilinx Arty A7](https://store.digilentinc.com/arty-a7-artix-7-fpga-development-board-for-makers-and-hobbyists/), which is one of the listed board that the linux-on-litex-vexriscv supports and that has an  ethernet socket
+- Buidling and loading linux worked after following the steps on their [github repo](https://github.com/litex-hub/linux-on-litex-vexriscv) (for Ubuntu)
+  ```
+  # install prerequesites
+  $ sudo apt install build-essential device-tree-compiler wget python3-setuptools
+
+  # clone linux-on-litex-vexriscv
+  $ git clone https://github.com/enjoy-digital/linux-on-litex-vexriscv && cd linux-on-litex-vexriscv
+
+  # install LiteX
+  $ wget https://raw.githubusercontent.com/enjoy-digital/litex/master/litex_setup.py
+  $ chmod +x litex_setup.py
+  $ ./litex_setup.py init install --user (--user to install to user directory)
+
+  # install Risc-V toolchain
+  $ wget https://static.dev.sifive.com/dev-tools/riscv64-unknown-elf-gcc-8.1.0-2019.01.0-x86_64-linux-ubuntu14.tar.gz
+  $ tar -xvf riscv64-unknown-elf-gcc-8.1.0-2019.01.0-x86_64-linux-ubuntu14.tar.gz
+  $ export PATH=$PATH:$PWD/riscv64-unknown-elf-gcc-8.1.0-2019.01.0-x86_64-linux-ubuntu14/bin/
+
+  # build fpga bitstream
+  $ sudo -E env "PATH=$PATH" ./make.py --board=XXYY --cpu-count=X --build
+
+  # load fpga bitstream to board
+  $ sudo -E env "PATH=$PATH" ./make.py --board=XXYY --cpu-count=X --load
+
+  # Load the Linux images over Serial
+  $ sudo -E env "PATH=$PATH" lxterm --images=images/boot.json /dev/ttyUSB1 --speed=1e6
+  ```
+
+__2021-1-19__
+- Discovered that the rust support for riscv 32 bit linux is not even close to complete, and not ready to use. There are the following alternatives to consider:
+  - `riscv32imac-unknown-none-elf` riscv 32 bit baremetal: would be the same issue as with the iccfpga that I can't use the `std` crate then, which is necessary for the p2p-network
+  - `i686-unknown-linux-gnu` 32-bit Linux (kernel 2.6.32+, glibc 2.11+): might work and is worth a shot, but I don't count on that
+  - `riscv64gc-unknown-linux-gnu` RISC-V Linux (kernel 4.20, glibc 2.29): 64bit architecture which I current don't have, but I found in the [list of projects with LiteX](https://github.com/enjoy-digital/litex/wiki/Projects#a-trustworthy-libre-self-hosting-64bit-risc-v-linux-computer) a project that implements a [64bit RISC-V CPU with Linux](http://www.contrib.andrew.cmu.edu/~somlo/BTCP/) by adding the [Rocket Chip SoC design](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2016/EECS-2016-17.html) to Litex. The project uses the ecp5versa board, I don't know yet how much of an issue it would be to follow the steps on the Arty A7 
+- My next steps are:
+  1) Try to load baremetal rust code to the fpga together with the linux image according to [this guide](https://github.com/enjoy-digital/litex/wiki/Load-Application-Code-To-CPU)
+  2) Test if rust code that is compiled for i686 runs on it
+  3) If 2) doesn't work (or if I have some time left) try to implement 64bit linux on the Arty A7.
+- Tried to load the compiled `hello-baremetal-world` binary to the fpga by copying it into the image directory and edit the /images/boot.json:
+```
+{
+    "Image":       "0x40000000",
+    "rv32.dtb":    "0x40ef0000",
+    "rootfs.cpio": "0x41000000",
+    "opensbi.bin": "0x40f00000",
+    "hello-baremetal-world": "0x41100000"
+}
+```
+-> It loads the binaries to the different addresses and "the last file/address tuple is used for the CPU jump" according to the wiki article.
+Produced following output:
+```
+...
+--============== Boot ==================--
+Booting from serial...
+Press Q or ESC to abort boot completely.
+sL5DdSMmkekro
+[LXTERM] Received firmware download request from the device.
+[LXTERM] Uploading images/Image to 0x40000000 (7279384 bytes)...
+[LXTERM] Upload complete (86.2KB/s).
+[LXTERM] Uploading images/rv32.dtb to 0x40ef0000 (4747 bytes)...
+[LXTERM] Upload complete (72.1KB/s).
+[LXTERM] Uploading images/rootfs.cpio to 0x41000000 (4002304 bytes)...
+[LXTERM] Upload complete (86.1KB/s).
+[LXTERM] Uploading images/opensbi.bin to 0x40f00000 (53640 bytes)...
+[LXTERM] Upload complete (84.0KB/s).
+[LXTERM] Uploading images/hello-baremetal-world to 0x41100000 (604368 bytes)...
+[LXTERM] Upload complete (86.0KB/s).
+[LXTERM] Booting the device.
+[LXTERM] Done.
+Executing booted program at 0x41100000
+
+--============= Liftoff! ===============--
+```
+-> Seems to work but currently not way to verify. Will need to figure out the address of an LED and use that.
