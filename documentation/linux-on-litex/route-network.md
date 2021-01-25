@@ -1,6 +1,7 @@
 ## Instructions to route the network traffic from the linux on litex over ethernet cable
 Prerequesites: linux image was loaded onto the FPGA, booted and the lxterm shell is open ([instructions](https://github.com/litex-hub/linux-on-litex-vexriscv)).
-The default local ip of the fpga is 192.168.1.50 and the host system 192.168.1.100
+The default local ip of the fpga is 192.168.1.50 and the host system 192.168.1.100 
+
 __On the lxterm shell of board__
 -  Configure ethernet (according to the [HOWTO](https://github.com/litex-hub/linux-on-litex-vexriscv/blob/master/HOWTO.md)):
   ```

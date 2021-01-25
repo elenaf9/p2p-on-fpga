@@ -193,7 +193,6 @@ __2021-01-15__
   # Load the Linux images over Serial
   $ sudo -E env "PATH=$PATH" lxterm --images=images/boot.json /dev/ttyUSB1 --speed=1e6
   ```
-
 __2021-1-19__
 - Discovered that the rust support for riscv 32 bit linux is not even close to complete, and not ready to use. There are the following alternatives to consider:
   - `riscv32imac-unknown-none-elf` riscv 32 bit baremetal: would be the same issue as with the iccfpga that I can't use the `std` crate then, which is necessary for the p2p-network
@@ -215,6 +214,7 @@ __2021-1-19__
 ```
 -> It loads the binaries to the different addresses and "the last file/address tuple is used for the CPU jump" according to the wiki article.
 Produced following output:
+
 ```
 ...
 --============== Boot ==================--
@@ -238,4 +238,29 @@ Executing booted program at 0x41100000
 
 --============= Liftoff! ===============--
 ```
--> Seems to work but currently not way to verify. Will need to figure out the address of an LED and use that.
+
+->Seems to work but currently not way to verify. Will need to figure out the address of an LED and use that.
+
+__2021-01-22__
+- Since in my above approach the CPU directly "jumps" to the programm instad of executing the opensbi.bin before (which is necessary to access the hardware properly), the program did most likely not run at all. I will need to think of another way to load my app binary onto the system
+
+__2021-01-25__
+- managed to configure network access for the board (steps are described [here](/documentation/linux-on-litex/route-network.md), this could now be used to install software from source
+- this linux is using [BusyBox](https://www.commandlinux.com/man-page/man1/busybox.1.html) which is something I will look further into and maybe configure the install packages.
+
+Started programming the p2p-network in Rust by using the libp2p crate:
+- combining the following protocols:
+   - to upgrade the transport layer:
+     - noise: encryption (Diffie-Hellmann encryption, XX Handshake) 
+     - yamux: multiplexing
+     - pnet:"private network with a preshared key that is read from a file
+   - behaviour:
+     - multicast DNS: peer discovery within a local network
+     - kademlia Distributed Hash Table: Peer discovery and file sharing
+     - Request Reponse Protocol: enables direct messages between peers
+     - gossip sub: pub sub message layer
+- init two tasks at begin that run in separate task and communicate over a channel:
+   - one polling from the swarm for incoming message and to forward outgoing request 
+   - one polling for user input (right now only stdin, eventually also from switches/ buttons from the dev-board)
+- right now only the main structure, not detaile implementation
+- not tested on hardware yet
