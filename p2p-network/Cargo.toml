@@ -1,9 +1,16 @@
 [package]
 name = "p2p-network"
 version = "0.1.0"
-authors = ["elenaf9 <elena.frank@protonmail.com>"]
+authors = ["Elena Frank <elena.frank@protonmail.com>"]
+license = "Apache-2.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+libp2p = "0.34"
+async-std = "1.6"
+async-trait = "0.1"
+thiserror = "1.0.21"
+serde = { version = "1.0.117", default-features = false, features = [ "alloc", "derive" ] }
+serde_json = { version = "1.0.59", default-features = false, features = [ "alloc" ] }
