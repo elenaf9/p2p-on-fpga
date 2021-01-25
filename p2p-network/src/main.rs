@@ -10,6 +10,7 @@ use libp2p::{
         prelude::*,
         select,
     },
+    core::ConnectedPoint,
     swarm::SwarmEvent,
     Multiaddr, PeerId, Swarm,
 };
@@ -62,16 +63,17 @@ impl PollSwarm {
         {
             return Err(());
         }
+        // block until the connection either failed 
         return task::block_on(async {
             loop {
                 match self.swarm.next_event().await {
                     SwarmEvent::ConnectionEstablished {
                         peer_id,
-                        endpoint: _,
+                        endpoint: ConnectedPoint::Dialer{address},
                         num_established: _,
                     } => {
                         if peer_id == target_peer_id {
-                            return Err(());
+                            return Ok((peer_id, address));
                         }
                     }
                     SwarmEvent::UnknownPeerUnreachableAddr { address, error: _ } => {
@@ -81,12 +83,12 @@ impl PollSwarm {
                     }
                     SwarmEvent::UnreachableAddr {
                         peer_id,
-                        address,
+                        address: _,
                         error: _,
                         attempts_remaining: 0,
                     } => {
                         if peer_id == target_peer_id {
-                            return Ok((peer_id, address));
+                            return Err(());
                         }
                     }
                     _ => {}
