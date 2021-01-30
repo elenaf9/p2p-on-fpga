@@ -245,7 +245,7 @@ __2021-01-22__
 - Since in my above approach the CPU directly "jumps" to the programm instad of executing the opensbi.bin before (which is necessary to access the hardware properly), the program did most likely not run at all. I will need to think of another way to load my app binary onto the system
 
 __2021-01-25__
-- managed to configure network access for the board (steps are described [here](/documentation/linux-on-litex/route-network.md), this could now be used to install software from source
+- managed to configure network access for the board (steps are described [here](/documentation/linux-on-litex/02_route-network.md), this could now be used to install software from source
 - this linux is using [BusyBox](https://www.commandlinux.com/man-page/man1/busybox.1.html) which is something I will look further into and maybe configure the install packages.
 
 Started programming the p2p-network in Rust by using the libp2p crate:
@@ -264,3 +264,27 @@ Started programming the p2p-network in Rust by using the libp2p crate:
    - one polling for user input (right now only stdin, eventually also from switches/ buttons from the dev-board)
 - right now only the main structure, not detaile implementation
 - not tested on hardware yet
+
+__2020-01-30__
+- configured TFTP server on my Ubuntu host computer according to [this](/documentation/linux-on-litex/03_transfer-files.md)
+-> managed to load compiled rust project to board
+- error executing a hello-world test programm that was compiled for `i686-unknown-linux-gnu"`: `line 1: syntax error: unexpected ")"`
+- error executing a the baremetal programm that ran on the iccfpga: 
+```
+[ 3416.415380] hello-baremetal[137]: unhandled signal 11 code 0x2 at 0x00000000 in hello-baremetal-world[0+1000]
+[ 3416.417074] CPU: 0 PID: 137 Comm: hello-baremetal Not tainted 5.10.0 #4                                       
+[ 3416.417989] epc: 00000000 ra : 00053254 sp : 9d9d7de0                                                         
+[ 3416.419118]  gp : 000e1800 tp : 95b3bef0 t0 : 000039d4                                                        
+[ 3416.419851]  t1 : 95a8ddd0 t2 : 959ef934 s0 : 000e2418                                                        
+[ 3416.420578]  s1 : 000e23f4 a0 : 00000000 a1 : 000e2418                                                        
+[ 3416.421302]  a2 : 000e2424 a3 : 0000002f a4 : 0000002f                                                        
+[ 3416.422031]  a5 : 000e23f8 a6 : 7efefeff a7 : 000000dd                                                        
+[ 3416.423104]  s2 : 000dbb41 s3 : 000c1884 s4 : 000e2424                                                        
+[ 3416.423835]  s5 : 95b3bef8 s6 : 00000008 s7 : 00000000                                                        
+[ 3416.424565]  s8 : 00000000 s9 : 000e4610 s10: 000e2418                                                        
+[ 3416.425294]  s11: 00000001 t3 : 0009fdd0 t4 : 000de384                                                        
+[ 3416.426005]  t5 : 32333b00 t6 : 00000001                                                                      
+[ 3416.426877] status: 00000020 badaddr: 00000000 cause: 0000000c                                                
+Segmentation fault
+```
+
