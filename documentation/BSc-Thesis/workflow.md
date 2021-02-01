@@ -288,3 +288,17 @@ __2020-01-30__
 Segmentation fault
 ```
 
+__2021-01-31__
+- Segmentation fault probably caused by invalid register addresses in `memory.x`, but I wasn't able to solve that
+- tried to include `riscv-rt` crate in test project, but still had error:
+```
+./test-project: line 1: x/4: not found
+./test-project: line 1: : not found 
+./test-project: line 1: ELF/$DDPtd: not found       
+./test-project: line 2: syntax error: unexpected ")"
+```
+- tried compiling for `riscv64gc-unknown-linux-gnu`:
+   - install gcc-riscv64-linux-gnu package
+   - edit the .cargo/config to use the riscv64-linux-gnu-gcc as linker  
+-> Libp2p did not compile because its dependency crate `ring` can not compile for riscv. There is a PR to fix that, but it was not merged yet. 
+-> I have to implement the 64bit linux anyway then, probably by adapting [these instructions](https://github.com/litex-hub/linux-on-litex-rocket) for the Arty A7
