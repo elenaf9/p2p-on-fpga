@@ -302,3 +302,52 @@ __2021-01-31__
    - edit the .cargo/config to use the riscv64-linux-gnu-gcc as linker  
 -> Libp2p did not compile because its dependency crate `ring` can not compile for riscv. There is a PR to fix that, but it was not merged yet. 
 -> I have to implement the 64bit linux anyway then, probably by adapting [these instructions](https://github.com/litex-hub/linux-on-litex-rocket) for the Arty A7
+
+__2021-02-05__
+- libp2p solved the same issue when compiling for wasm by excluding the ring-depndency and using different features for the `snow` dependency crate, therefore I forked rust-libp2p dependency and edited to use the configuration that is also used for wasm.
+-> compiled for `riscv64gc-unknown-linux-gnu`
+
+__2021-02-06__
+- simulate Riscv-64bit with Qemu:
+  - Steps from [here](https://risc-v-getting-started-guide.readthedocs.io/en/latest/linux-qemu.html)
+  - Additional prerequisites: 'libglib2.0', 'pixman-1-dev'
+  - change the CROSS\_COMPILE environment variable use `riscv64-linux-gnu-` instead of `riscv64-unknown-linux-gnu`
+  - busybox: checkout 1\_33 stable, but error:
+  ```
+  make: *** [Makefile:857: include/config/MARKER] Error 1]
+  ```
+__2021-02-07__
+- implement the [SiFive Freedom E300](https://github.com/sifive/freedom) platform on the ArtyA7. This implements the riscv 64bit Rocket Chip
+  - install additional board files for the arty from [here](https://reference.digilentinc.com/reference/software/vivado/board-files?redirect=1)
+  - output:
+  ```
+  ===================================
+  Configuration Memory information
+  ===================================
+  File Format        MCS
+  Interface          SPIX4
+  Size               16M
+  Start Address      0x00000000
+  End Address        0x00FFFFFF
+
+  Addr1         Addr2         Date                    File(s)
+  0x00000000    0x0021728B    Feb  7 19:39:45 2021    /freedom/builds/e300artydevkit/obj/E300ArtyDevKitFPGAChip.bit
+  )
+  ```
+- setup symbiflow toolchain
+  - install symbiflow toolchain with instructions from [here](https://symbiflow-examples.readthedocs.io/en/latest/getting-symbiflow.html)
+  - example `counter_test` was successfull
+  - make example `linux_litex_demo` caused error:
+  ```
+  ImportError: cannot import name 'antlr_to_tuple' from 'fasm.parser' (/media/elfr/f6d78728-cecd-4bcd-8a18-3f619826515c/home/elenaf/opt/symbiflow/xc7/conda/envs/xc7/lib/python3.7/site-packages/fasm/
+  parser/__init__.py)                           
+  Please install all dependencies and reinstall with:
+  pip uninstall                                  
+  pip install -v fasm                            
+  '  pip install -v fasm'.format(e), RuntimeWarning))
+  ```
+    - since the program haltered I interrupted it
+    - uninstalled fasm, but could not install it again : `pip._internal.exceptions.DistributionNotFound: No matching distribution found for fasm`
+- tried loading the freedom soc to the board with `sudo openocd -f ${INSTALL_DIR}/${FPGA_FAM}/conda/envs/${FPGA_FAM}/share/openocd/scripts/board/digilent_arty.cfg -c "init; pld load 0 E300ArtyDevKitFPGAChip.bit; exit"`
+  - openocd finished and all LEDs got switched on, but apart from that could not verify it was successful; screen to `ttyUSB1` is blank
+  - next steps is to build linux and busybox run it on the freedom gateware similar to how it can be [simulated on QEMU](https://risc-v-getting-starte-guide.readthedocs.io/en/latest/linux-qemu.html)
