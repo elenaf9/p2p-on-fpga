@@ -36,7 +36,7 @@ __Scala__
 - result in .class files that run on JVM 
 
 
-__SpinalDHL__
+__SpinalHDL__
 - [is a set of Scala libraries](https://index.scala-lang.org/spinalhdl/spinalhdl/spinalhdl-core/1.2.1)
 - https://www.youtube.com/watch?v=XyDiz3SRogY:
   - embedded into general purpose language
