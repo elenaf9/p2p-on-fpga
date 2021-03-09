@@ -351,3 +351,45 @@ __2021-02-07__
 - tried loading the freedom soc to the board with `sudo openocd -f ${INSTALL_DIR}/${FPGA_FAM}/conda/envs/${FPGA_FAM}/share/openocd/scripts/board/digilent_arty.cfg -c "init; pld load 0 E300ArtyDevKitFPGAChip.bit; exit"`
   - openocd finished and all LEDs got switched on, but apart from that could not verify it was successful; screen to `ttyUSB1` is blank
   - next steps is to build linux and busybox run it on the freedom gateware similar to how it can be [simulated on QEMU](https://risc-v-getting-starte-guide.readthedocs.io/en/latest/linux-qemu.html)
+
+__2021-03-7__
+- tried simulation with qemu again: 
+
+__2021-03-08__
+- installed vivado cable drivers to detect arty board via usb cable: run `(<Vivado installation dir>/data/xicom/cable_drivers/lin64/install_script/install_drivers/install_drivers` script
+-> should detect board in vivado via `Hardware Manager > Open Target > Auto detect`
+- tried compiling linux-on-litex-vexriscv with symbiflow toolchain, but error: 
+- loaded [freedom](https://github.com/sifive/freedom/) (rocket chip) to board by using vivado `Hardware Manager > Programm Device`, loading mcs did not work because of wrong board revision: https://github.com/sifive/freedom/issues/171, loaded bit file instead -> seems successfull, vivado output:
+```
+set_property PROBES.FILE {} [get_hw_devices xc7a35t_0]
+set_property FULL_PROBES.FILE {} [get_hw_devices xc7a35t_0]
+set_property PROGRAM.FILE {/media/elfr/f6d78728-cecd-4bcd-8a18-3f619826515c/home/elenaf/Hardware/FPGAs/freedom/builds/e300artydevkit/obj/E300ArtyDevKitFPGAChip.bit} [get_hw_devices xc7a35t_0]
+program_hw_devices [get_hw_devices xc7a35t_0]
+INFO: [Labtools 27-3164] End of startup status: HIGH
+refresh_hw_device [lindex [get_hw_devices xc7a35t_0] 0]
+INFO: [Labtools 27-1434] Device xc7a35t (JTAG device index = 0) is programmed with a design that has no supported debug core(s) in it.
+WARNING: [Labtools 27-3361] The debug hub core was not detected.
+Resolution:
+1. Make sure the clock connected to the debug hub (dbg_hub) core is a free running clock and is active.
+2. Make sure the BSCAN_SWITCH_USER_MASK device property in Vivado Hardware Manager reflects the user scan chain setting in the design and refresh the device.  To determine the user scan chain setting in the design, open the implemented design and use 'get_property C_USER_SCAN_CHAIN [get_debug_cores dbg_hub]'.
+For more details on setting the scan chain property, consult the Vivado Debug and Programming User Guide (UG908).
+```
+- linux on top of Freedom E310 (Xilinx Arty) will not work since e.g. not virtual memory support: https://github.com/sifive/freedom/issues/123,
+  - can probably be substituted with litex (since it is also possible to run 32bit linux on the arty)
+  - will fallback to the `linux-on-litex-rocket` project, which does not support arty yet though
+- tried to compile instructions from `linux-on-litex-rocket` for arty.py
+  - failed: "no rule to make" -> deleted /build folder in the parent folder of all the litex module (per guess)
+  - building and loading worked, lights are blinking, but from output & lights seems like vexriscv was somehow loaded instead of rocket, maybe because parts are cached and not rebuilded?
+  ```
+  ===================================
+  Configuration Memory information
+  ===================================
+  File Format        BIN
+  Interface          SPIX4
+  Size               16M
+  Start Address      0x00000000
+  End Address        0x00FFFFFF
+  
+  Addr1         Addr2         Date                    File(s)
+  0x00000000    0x0021728B    Mar  9 00:21:26 2021    arty.bit
+  ```

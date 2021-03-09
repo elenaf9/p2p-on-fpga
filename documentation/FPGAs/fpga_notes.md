@@ -50,20 +50,24 @@ FlipFlops:
 - 2 In: Clock, Data-In, 1 Out Q(and stuff like Reset-Input)
 - D-FlipFlop mostly used
 - flipflops keep the state of an fpga
-Clock in FPGA: (_____|^^^^^|_____|^^^^^)
+Clock in FPGA: `(_____|^^^^^|_____|^^^^^)`
 - squarewave
 - runs though FPGA at a certain frequency, e.g. 1 MHz
 - input for all flipflops, drives the fpga
 - flipflops are triggered at the edge of the clock (most of the time the risin of the clock from 0 to 1)
 Example 1:
+```
 DATA:   ___|^^^^^^^^|______________|^^^^^^^
 CLOCK:  _____|^^^^^|_____|^^^^^|_____|^^^^^
 Q:      _____|^^^^^^^^^^^|___________|^^^^^^
+```
 -> Q only goes high on clock trigger ("Only sees Data on rising edge of clock"), clock aligned
+```
 Example 2:
 DATA:   _______|^^^^^^^|_____________
 CLOCK:  _____|^^^^^|_____|^^^^^|_____
 Q:           ________________________
+```
 
 https://www.eetimes.com/all-about-fpgas/
 - former purpose of fpgas: prototyping asics, achive time-to-marked but will be replaced with asics asap -> can be programmed within a  minute
