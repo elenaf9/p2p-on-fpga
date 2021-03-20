@@ -11,4 +11,8 @@
 
 # vim files
 .*.sw*
+
 *.mp4
+
+# vivado files
+vivado*

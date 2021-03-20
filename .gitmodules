@@ -1,0 +1,3 @@
+[submodule "rust-libp2p"]
+	path = rust-libp2p
+	url = https://github.com/elenaf9/rust-libp2p.git
