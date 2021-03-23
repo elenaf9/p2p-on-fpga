@@ -8,7 +8,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libp2p = {version="0.35", git ="https://github.com/elenaf9/rust-libp2p.git", branch = "cross-compile/riscv64-linux" }
+libp2p = {version="0.37", path="../rust-libp2p"}
 async-std = "1.6"
 async-trait = "0.1"
 thiserror = "1.0.21"

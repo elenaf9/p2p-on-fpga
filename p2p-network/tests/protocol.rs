@@ -1,4 +1,3 @@
-
 use crate::behaviour::msg_protocol::{MessageCodec, MessageProtocol, Request, Response};
 use async_std::{
     io,

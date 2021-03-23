@@ -1,20 +1,21 @@
-mod msg_protocol;
-use crate::transport::TransportLayer;
+use super::{
+    msg_protocol::{MessageCodec, MessageProtocol},
+    transport::TransportLayer,
+};
+use crate::types::*;
 use core::{iter, time::Duration};
 use libp2p::{
     gossipsub::{
         Gossipsub, GossipsubConfigBuilder, GossipsubEvent, IdentTopic, MessageAuthenticity,
     },
     kad::{record::store::MemoryStore, Kademlia, KademliaEvent},
-    mdns::{Mdns, MdnsEvent},
+    mdns::{Mdns, MdnsConfig, MdnsEvent},
     request_response::{
         ProtocolSupport, RequestId, RequestResponse, RequestResponseConfig, RequestResponseEvent,
     },
     swarm::{NetworkBehaviourEventProcess, Swarm},
     NetworkBehaviour, PeerId,
 };
-use msg_protocol::{MessageCodec, MessageProtocol};
-pub use msg_protocol::{Request, Response};
 
 #[derive(NetworkBehaviour)]
 pub struct Behaviour {
@@ -53,8 +54,23 @@ impl NetworkBehaviourEventProcess<GossipsubEvent> for Behaviour {
 }
 
 impl Behaviour {
+    pub async fn build_swarm(transport: TransportLayer) -> Swarm<Behaviour> {
+        let behaviour = Behaviour::new(&transport).await.unwrap();
+        let peer_id = transport.local_peer_id();
+        Swarm::new(transport.build().await, behaviour, peer_id)
+    }
+
+    pub fn _subscribe(&mut self, topic: &str) {
+        let topic = IdentTopic::new(topic);
+        self.gossipsub.subscribe(&topic).unwrap();
+    }
+
+    pub fn _send_request(&mut self, peer_id: &PeerId, request: Request) -> RequestId {
+        self.reqres.send_request(peer_id, request)
+    }
+
     async fn new(transport: &TransportLayer) -> Result<Behaviour, ()> {
-        let mdns = Mdns::new().await.map_err(|_| ())?;
+        let mdns = Mdns::new(MdnsConfig::default()).await.map_err(|_| ())?;
         let kademlia = {
             let store = MemoryStore::new(transport.local_peer_id());
             Kademlia::new(transport.local_peer_id(), store)
@@ -79,20 +95,5 @@ impl Behaviour {
             gossipsub,
             reqres,
         })
-    }
-
-    pub async fn build_swarm(transport: TransportLayer) -> Swarm<Behaviour> {
-        let behaviour = Behaviour::new(&transport).await.unwrap();
-        let peer_id = transport.local_peer_id();
-        Swarm::new(transport.build(), behaviour, peer_id)
-    }
-
-    pub fn subscribe(&mut self, topic: &str) {
-        let topic = IdentTopic::new(topic);
-        self.gossipsub.subscribe(&topic).unwrap();
-    }
-
-    pub fn send_request(&mut self, peer_id: &PeerId, request: Request) -> RequestId {
-        self.reqres.send_request(peer_id, request)
     }
 }

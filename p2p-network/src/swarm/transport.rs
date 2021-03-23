@@ -30,11 +30,11 @@ impl TransportLayer {
         let keypair = fs::read(path.join("private.pk8"))
             .ok()
             .and_then(|mut bytes| Keypair::secp256k1_from_der(&mut bytes).ok())
-            .unwrap_or(Keypair::generate_ed25519());
+            .unwrap_or_else(Keypair::generate_ed25519);
         Ok(TransportLayer { keypair, psk })
     }
 
-    pub fn build(&self) -> transport::Boxed<(PeerId, StreamMuxerBox)> {
+    pub async fn build(&self) -> transport::Boxed<(PeerId, StreamMuxerBox)> {
         // tcp layer
         let tcp_config = TcpConfig::new().nodelay(true);
         // noise encryption with Diffie-Hellman key exchange
@@ -43,7 +43,8 @@ impl TransportLayer {
             .unwrap();
         // enable dns adresses in multiaddress
         let psk = self.psk;
-        let transport = DnsConfig::new(tcp_config)
+        let transport = DnsConfig::system(tcp_config)
+            .await
             .unwrap()
             // additional security by using a pre-shared key within one network
             .and_then(move |socket, _| PnetConfig::new(psk).handshake(socket));

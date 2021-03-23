@@ -1,50 +1,15 @@
+use crate::types::*;
 use async_trait::async_trait;
 use core::fmt::Debug;
-use libp2p::futures::{prelude::*, AsyncRead, AsyncWrite};
 use libp2p::{
     core::{
         upgrade::{read_one, write_one},
         ProtocolName,
     },
     request_response::RequestResponseCodec,
+    futures::{prelude::*, AsyncRead, AsyncWrite},
 };
-use serde::{Deserialize, Serialize};
 use std::io::{Error as IOError, ErrorKind as IOErrorKind, Result as IOResult};
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum LedState {
-    On,
-    Off,
-    Blink(u16),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum ProcedureRequest {
-    GetValue { key: String },
-    Store { key: String, value: Vec<u8> },
-    SetLedState { pin: u32, state: LedState },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum ProcedureResult {
-    Success,
-    Failure(String),
-    Record { key: String, value: Vec<u8> },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum Request {
-    Ping,
-    Message(String),
-    Procedure(ProcedureRequest),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum Response {
-    Pong,
-    Message(String),
-    Procedure(ProcedureResult),
-}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MessageProtocol;
