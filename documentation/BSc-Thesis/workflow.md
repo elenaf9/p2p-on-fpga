@@ -393,3 +393,8 @@ For more details on setting the scan chain property, consult the Vivado Debug an
   Addr1         Addr2         Date                    File(s)
   0x00000000    0x0021728B    Mar  9 00:21:26 2021    arty.bit
   ```
+
+__2021-03-14__
+- managed to flash the mcs file of the freedom 310 to the arty board by adding in vivado the configuration memory file:
+  - `> Add Configuration Memory File > s25fl128xxxxxx0.spo-x1_x2_x4 > Ok > Configuration File: freedom/builds/e300artydevkit/obj/E300ArtyDevKitFPGAChip.mcs`
+  - Pop-up claimed that flashing worked, but after booting from Configuration Memory device is not doing the supposed blinking of lights
