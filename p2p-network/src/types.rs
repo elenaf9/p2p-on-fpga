@@ -1,50 +1,44 @@
-use libp2p::{Multiaddr, PeerId};
+use libp2p::{
+    gossipsub::{
+        error::{PublishError, SubscriptionError},
+        IdentTopic, MessageId,
+    },
+    kad::{GetRecordError, PutRecordError, Record},
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
-pub enum Commands {
-    ConnectPeer { peer_id: PeerId, addr: Multiaddr },
-    SendRequest { request: Request, peer_id: PeerId },
-    SubscribeGossipTopic(String),
-    PublishGossipData { data: Vec<u8>, topic: String },
+pub enum Command {
+    SubscribeGossipTopic(IdentTopic),
+    UnsubscribeGossipTopic(IdentTopic),
+    PublishGossipData {
+        data: GossipMessage,
+        topic: IdentTopic,
+    },
     GetRecord(String),
-    PutRecord { key: String, value: Vec<u8> },
+    PutRecord {
+        key: String,
+        value: Vec<u8>,
+    },
     RemoveRecord(String),
     Shutdown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum LedState {
-    On,
-    Off,
-    Blink(u16),
+#[derive(Debug)]
+#[allow(dead_code)]
+pub enum CommandResult {
+    SubscribeResult(Result<bool, SubscriptionError>),
+    UnsubscribResult(Result<bool, PublishError>),
+    PublishResult(Result<MessageId, PublishError>),
+    GetRecordResult(Result<Vec<Record>, GetRecordError>),
+    PutRecordResult(Result<(), PutRecordError>),
+    RemoveRecordAck,
+    ShutdownAck,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum ProcedureRequest {
-    GetValue { key: String },
-    Store { key: String, value: Vec<u8> },
-    SetLedState { pin: u32, state: LedState },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum ProcedureResult {
-    Success,
-    Failure(String),
-    Record { key: String, value: Vec<u8> },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum Request {
+pub enum GossipMessage {
     Ping,
     Message(String),
-    Procedure(ProcedureRequest),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum Response {
-    Pong,
-    Message(String),
-    Procedure(ProcedureResult),
 }

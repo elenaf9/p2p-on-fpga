@@ -1,20 +1,14 @@
-use super::{
-    msg_protocol::{MessageCodec, MessageProtocol},
-    transport::TransportLayer,
-};
+use super::transport::TransportLayer;
 use crate::types::*;
-use core::{iter, time::Duration};
 use libp2p::{
     gossipsub::{
-        Gossipsub, GossipsubConfigBuilder, GossipsubEvent, IdentTopic, MessageAuthenticity,
+        error::PublishError, Gossipsub, GossipsubConfigBuilder, GossipsubEvent, GossipsubMessage,
+        IdentTopic, MessageAuthenticity, MessageId,
     },
     kad::{record::store::MemoryStore, Kademlia, KademliaEvent},
     mdns::{Mdns, MdnsConfig, MdnsEvent},
-    request_response::{
-        ProtocolSupport, RequestId, RequestResponse, RequestResponseConfig, RequestResponseEvent,
-    },
     swarm::{NetworkBehaviourEventProcess, Swarm},
-    NetworkBehaviour, PeerId,
+    NetworkBehaviour,
 };
 
 #[derive(NetworkBehaviour)]
@@ -22,7 +16,6 @@ pub struct Behaviour {
     mdns: Mdns,
     kademlia: Kademlia<MemoryStore>,
     gossipsub: Gossipsub,
-    reqres: RequestResponse<MessageCodec>,
 }
 
 impl NetworkBehaviourEventProcess<MdnsEvent> for Behaviour {
@@ -41,32 +34,62 @@ impl NetworkBehaviourEventProcess<KademliaEvent> for Behaviour {
     }
 }
 
-impl NetworkBehaviourEventProcess<RequestResponseEvent<Request, Response>> for Behaviour {
-    fn inject_event(&mut self, _event: RequestResponseEvent<Request, Response>) {
-        todo!()
-    }
-}
-
 impl NetworkBehaviourEventProcess<GossipsubEvent> for Behaviour {
-    fn inject_event(&mut self, _event: GossipsubEvent) {
-        todo!()
+    fn inject_event(&mut self, event: GossipsubEvent) {
+        if let GossipsubEvent::Message {
+            message_id,
+            message:
+                GossipsubMessage {
+                    source,
+                    data,
+                    topic,
+                    ..
+                },
+            ..
+        } = event
+        {
+            let source = source
+                .map(|p| p.to_base58())
+                .unwrap_or_else(|| String::from("Anonymous"));
+            println!(
+                "Received Message {}\nTopic: {}\nPublished by {}\nData:{:?}",
+                message_id,
+                topic.into_string(),
+                source,
+                data
+            )
+        }
     }
 }
 
 impl Behaviour {
     pub async fn build_swarm(transport: TransportLayer) -> Swarm<Behaviour> {
-        let behaviour = Behaviour::new(&transport).await.unwrap();
+        let behaviour = Behaviour::new(&transport)
+            .await
+            .expect("Failed to create Network Behaviour.");
         let peer_id = transport.local_peer_id();
         Swarm::new(transport.build().await, behaviour, peer_id)
     }
 
-    pub fn _subscribe(&mut self, topic: &str) {
-        let topic = IdentTopic::new(topic);
-        self.gossipsub.subscribe(&topic).unwrap();
+    pub fn subscribe(&mut self, topic: &IdentTopic) -> bool {
+        self.gossipsub
+            .subscribe(topic)
+            .expect("Failed to subscribe.")
     }
 
-    pub fn _send_request(&mut self, peer_id: &PeerId, request: Request) -> RequestId {
-        self.reqres.send_request(peer_id, request)
+    pub fn unsubscribe(&mut self, topic: &IdentTopic) {
+        self.gossipsub
+            .unsubscribe(topic)
+            .expect("Failed to unsubscribe.");
+    }
+
+    pub fn publish_data(
+        &mut self,
+        topic: IdentTopic,
+        data: &GossipMessage,
+    ) -> Result<MessageId, PublishError> {
+        let data_vec = serde_json::to_vec(data).expect("Could not serialize data.");
+        self.gossipsub.publish(topic, data_vec)
     }
 
     async fn new(transport: &TransportLayer) -> Result<Behaviour, ()> {
@@ -83,17 +106,10 @@ impl Behaviour {
             )
             .unwrap()
         };
-        let reqres = {
-            let mut cfg = RequestResponseConfig::default();
-            cfg.set_connection_keep_alive(Duration::from_secs(60));
-            let protocols = iter::once((MessageProtocol, ProtocolSupport::Full));
-            RequestResponse::new(MessageCodec, protocols, cfg)
-        };
         Ok(Behaviour {
             mdns,
             kademlia,
             gossipsub,
-            reqres,
         })
     }
 }

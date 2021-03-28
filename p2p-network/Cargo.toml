@@ -8,9 +8,18 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libp2p = {version="0.37", path="../rust-libp2p"}
+libp2p = {version="0.37", path="../rust-libp2p", default-features =  false, features = [
+    "dns-async-std",
+    "kad",
+    "gossipsub",
+    "mdns",
+    "noise",
+    "tcp-async-io",
+    "yamux",
+]}
 async-std = "1.6"
 async-trait = "0.1"
 thiserror = "1.0.21"
 serde = { version = "1.0.117", default-features = false, features = [ "alloc", "derive" ] }
 serde_json = { version = "1.0.59", default-features = false, features = [ "alloc" ] }
+regex = "1.4.5"
