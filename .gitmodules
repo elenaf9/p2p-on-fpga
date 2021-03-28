@@ -4,3 +4,6 @@
 [submodule "iccfpga"]
 	path = iccfpga
 	url = https://gitlab.com/iccfpga-rv/iccfpga.git
+[submodule "documentation/litex-vexriscv/litex-vexriscv-arty-a7-doc"]
+	path = documentation/litex-vexriscv/litex-vexriscv-arty-a7-doc
+	url = git@github.com:elenaf9/litex-vexriscv-arty-a7-doc.git
