@@ -1,11 +1,8 @@
 use async_std::io;
 use core::task::{Context, Poll};
-use libp2p::{
-    futures::{
-        channel::mpsc::{SendError, UnboundedReceiver, UnboundedSender},
-        prelude::*,
-    },
-    gossipsub::IdentTopic,
+use  futures::{
+    channel::mpsc::{UnboundedReceiver, UnboundedSender},
+    prelude::*,
 };
 
 use crate::types::*;
@@ -30,7 +27,7 @@ impl PollUser {
         }
     }
 
-    pub async fn poll_user_input(mut self) {
+    pub async fn run(mut self) {
         let mut stdin = io::BufReader::new(io::stdin()).lines();
         loop {
             let command = stdin
@@ -45,7 +42,7 @@ impl PollUser {
         }
     }
 
-    async fn subscribe(&mut self, topic: IdentTopic) {
+    async fn subscribe(&mut self, topic: String) {
         let command = Command::SubscribeGossipTopic(topic);
         self.send_channel(&command).await;
         let res = self.cmd_res_rx.next().await;
@@ -63,7 +60,7 @@ impl PollUser {
         }
     }
 
-    async fn unsubscribe(&mut self, topic: IdentTopic) {
+    async fn unsubscribe(&mut self, topic: String) {
         let command = Command::SubscribeGossipTopic(topic);
         self.send_channel(&command).await;
         let res = self.cmd_res_rx.next().await;
@@ -81,7 +78,7 @@ impl PollUser {
         }
     }
 
-    async fn publish(&mut self, topic: IdentTopic, data: GossipMessage) {
+    async fn publish(&mut self, topic: String, data: GossipMessage) {
         let command = Command::PublishGossipData { data, topic };
         self.send_channel(&command).await;
 

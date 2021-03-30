@@ -23,3 +23,4 @@ thiserror = "1.0.21"
 serde = { version = "1.0.117", default-features = false, features = [ "alloc", "derive" ] }
 serde_json = { version = "1.0.59", default-features = false, features = [ "alloc" ] }
 regex = "1.4.5"
+futures = "0.3.13"

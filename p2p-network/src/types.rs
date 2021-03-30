@@ -6,15 +6,16 @@ use libp2p::{
     kad::{GetRecordError, PutRecordError, Record},
 };
 use serde::{Deserialize, Serialize};
+use core::time::Duration;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub enum Command {
-    SubscribeGossipTopic(IdentTopic),
-    UnsubscribeGossipTopic(IdentTopic),
+    SubscribeGossipTopic(String),
+    UnsubscribeGossipTopic(String),
     PublishGossipData {
         data: GossipMessage,
-        topic: IdentTopic,
+        topic: String,
     },
     GetRecord(String),
     PutRecord {
@@ -37,8 +38,15 @@ pub enum CommandResult {
     ShutdownAck,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GossipMessage {
-    Ping,
     Message(String),
+    SetLed(LedState)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum LedState {
+    On,
+    Off,
+    Blink(Duration)
 }

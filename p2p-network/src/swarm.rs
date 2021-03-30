@@ -5,15 +5,15 @@ use async_std::task;
 use behaviour::Behaviour;
 use core::str::FromStr;
 use libp2p::{
-    futures::{
-        channel::mpsc::{UnboundedReceiver, UnboundedSender},
-        prelude::*,
-        select,
-    },
     swarm::SwarmEvent,
     Multiaddr, Swarm,
 };
 use transport::TransportLayer;
+use futures::{
+    channel::mpsc::{UnboundedReceiver, UnboundedSender},
+    prelude::*,
+    select,
+};
 
 macro_rules! await_swarm_event {
     ($swarm:expr, { $($case:ident$fields:tt $(if $cond:expr)? => $ret:expr),+ }) => {
@@ -83,7 +83,7 @@ impl PollSwarm {
     //     })
     // }
 
-    pub async fn poll_futures(mut self) {
+    pub async fn run(mut self) {
         loop {
             select! {
                 user_cmd = self.cmd_rx.next().fuse() => match user_cmd {
@@ -99,10 +99,10 @@ impl PollSwarm {
     fn run_command(&mut self, cmd: Command) {
         match cmd {
             Command::SubscribeGossipTopic(topic) => {
-                self.swarm.behaviour_mut().subscribe(&topic);
+                self.swarm.behaviour_mut().subscribe(topic);
             }
             Command::UnsubscribeGossipTopic(topic) => {
-                self.swarm.behaviour_mut().unsubscribe(&topic)
+                self.swarm.behaviour_mut().unsubscribe(topic)
             }
             Command::PublishGossipData { topic, data } => {
                 let res = self.swarm.behaviour_mut().publish_data(topic, &data);

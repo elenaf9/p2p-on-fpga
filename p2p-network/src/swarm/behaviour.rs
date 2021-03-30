@@ -71,23 +71,26 @@ impl Behaviour {
         Swarm::new(transport.build().await, behaviour, peer_id)
     }
 
-    pub fn subscribe(&mut self, topic: &IdentTopic) -> bool {
+    pub fn subscribe(&mut self, topic: String) -> bool {
+        let topic = IdentTopic::new(topic);
         self.gossipsub
-            .subscribe(topic)
+            .subscribe(&topic)
             .expect("Failed to subscribe.")
     }
 
-    pub fn unsubscribe(&mut self, topic: &IdentTopic) {
+    pub fn unsubscribe(&mut self, topic: String) {
+        let topic = IdentTopic::new(topic);
         self.gossipsub
-            .unsubscribe(topic)
+            .unsubscribe(&topic)
             .expect("Failed to unsubscribe.");
     }
 
     pub fn publish_data(
         &mut self,
-        topic: IdentTopic,
+        topic: String,
         data: &GossipMessage,
     ) -> Result<MessageId, PublishError> {
+        let topic = IdentTopic::new(topic);
         let data_vec = serde_json::to_vec(data).expect("Could not serialize data.");
         self.gossipsub.publish(topic, data_vec)
     }
