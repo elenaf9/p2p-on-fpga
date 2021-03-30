@@ -1,9 +1,6 @@
 [submodule "rust-libp2p"]
 	path = rust-libp2p
 	url = https://github.com/elenaf9/rust-libp2p.git
-[submodule "iccfpga"]
-	path = iccfpga
-	url = https://gitlab.com/iccfpga-rv/iccfpga.git
 [submodule "documentation/litex-vexriscv/litex-vexriscv-arty-a7-doc"]
 	path = documentation/litex-vexriscv/litex-vexriscv-arty-a7-doc
 	url = git@github.com:elenaf9/litex-vexriscv-arty-a7-doc.git
