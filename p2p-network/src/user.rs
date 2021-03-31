@@ -1,16 +1,13 @@
 use futures::{
     channel::mpsc::{UnboundedReceiver, UnboundedSender},
     prelude::*,
+    select,
     task::{Context, Poll},
 };
 
 use crate::types::*;
-use regex::RegexSet;
-use std::{
-    io::{self, BufRead},
-    thread,
-    time::Duration,
-};
+use async_std::io::{stdin, BufReader};
+use std::{str::FromStr, time::Duration};
 
 pub struct PollUser {
     cmd_tx: UnboundedSender<Command>,
@@ -32,42 +29,56 @@ impl PollUser {
     }
 
     pub async fn run(mut self) {
-        let stdin = io::stdin();
-        let mut lines = stdin.lock().lines();
+        let mut stdin = BufReader::new(stdin()).lines();
+        let _ = super::cli::build_app().print_long_help();
+        println!("\n\n");
         loop {
-            match lines.next() {
-                Some(line) => {
-                    let command = line.map(Self::parse_input).unwrap_or(Command::Shutdown);
-                    let res = self.handle_command(command.clone()).await;
-                    if let Err(err) = res {
-                        println!("Aborting due to error: {}", err);
-                        break;
+            select! {
+                line = stdin.next().fuse()=> {
+                    let command = match line {
+                        Some(Ok(line)) => self.parse_input(line),
+                        Some(Err(err)) => {
+                            println!("Aborting due to error: {}", err);
+                            break;
+                        }
+                        None => {
+                            println!("Stdin closed. Aborting.");
+                            Some(Command::Shutdown)
+                        }
+                    };
+                    if let Some(command) = command {
+                        let res = self.handle_command(command.clone()).await;
+                        if let Err(err) = res {
+                            println!("Aborting due to error: {}", err);
+                            break;
+                        }
+                        if let Command::Shutdown = command {
+                            break;
+                        }
                     }
-                    if let Command::Shutdown = command {
+                }
+                message = self.message_rx.next().fuse() => match message {
+                    Some((topic, message)) => Self::print_incoming(topic, message),
+                    None => {
+                        println!("Message channel closed unexpected. Aborting.");
+                        let _ = self.handle_command(Command::Shutdown).await;
                         break;
                     }
                 }
-                None => match self.message_rx.try_next() {
-                    Ok(Some((topic, message))) => match message {
-                        GossipMessage::Message(msg) => {
-                            println!("Received gossip message for topic {}:\n{:?}", topic, msg)
-                        }
-                        GossipMessage::SetLed(state) => {
-                            println!("Received command to set Led state: {}", state)
-                        }
-                    },
-                    Ok(None) => {}
-                    Err(err) => {
-                        println!("Aborting due to error: {}", err);
-                        break;
-                    }
-                },
             }
-            thread::sleep(Duration::from_millis(10));
         }
     }
 
-    async fn print_incoming() {}
+    fn print_incoming(topic: String, message: GossipMessage) {
+        match message {
+            GossipMessage::Message(msg) => {
+                println!("Received gossip message for topic {}:\n{:?}", topic, msg)
+            }
+            GossipMessage::SetLed(state) => {
+                println!("Received command to set Led state: {}", state)
+            }
+        }
+    }
 
     async fn handle_command(&mut self, command: Command) -> Result<(), String> {
         match command {
@@ -205,17 +216,109 @@ impl PollUser {
         .map_err(|err| format!("Error in channel for sending command: {:?}", err))
     }
 
-    fn parse_input(line: String) -> Command {
-        let regex = RegexSet::new(&[
-            r"^Subscribe\s+(?P<topic>\w+)$",
-            r"^Unsubscribe\s+(?P<topic>\w+)$",
-            r"^Publish\s+(?P<topic>\w+)\s+(?P<type>ping|message\s+?P<msg>(\w+))$",
-            r"^Get\s+(?P<key>\w+)",
-            r"^Put\s+(?P<key>\w+)\s+(?P<value>\w+)",
-            r"^Remove\s+(?P<key>\w+)",
-            r"^Shutdown$",
-        ])
-        .expect("Invalid Regex");
-        todo!();
+    fn parse_input(&mut self, line: String) -> Option<Command> {
+        let (args, _) =
+            line.split('"')
+                .fold((Vec::<String>::new(), 0), |(mut args, index), string| {
+                    if index % 2 == 0 {
+                        let mut new_args = string
+                            .replace("=", " ")
+                            .split(' ')
+                            .map(|s| s.to_string())
+                            .collect();
+                        args.append(&mut new_args);
+                    } else {
+                        args.push(string.to_string())
+                    }
+                    (args, index + 1)
+                });
+
+        let mut app = super::cli::build_app();
+        let matches = app
+            .get_matches_from_safe_borrow(args)
+            .map_err(|_| {
+                println!("\nInvalid argument: \"{}\"\n", line);
+                let _ = app.print_long_help();
+                println!("\n\n");
+            })
+            .ok()?;
+
+        if let Some(topic) = matches
+            .subcommand_matches("subscribe")
+            .and_then(|matches| matches.value_of("topic"))
+        {
+            return Some(Command::SubscribeGossipTopic(topic.to_string()));
+        }
+
+        if let Some(topic) = matches
+            .subcommand_matches("unsubscribe")
+            .and_then(|matches| matches.value_of("topic"))
+        {
+            return Some(Command::UnsubscribeGossipTopic(topic.to_string()));
+        }
+
+        if let Some(topic) = matches
+            .subcommand_matches("publish")
+            .and_then(|matches| matches.value_of("topic"))
+        {
+            let topic = topic.to_string();
+
+            if let Some(message) = matches
+                .subcommand_matches("message")
+                .and_then(|matches| matches.value_of("message"))
+            {
+                let data = GossipMessage::Message(message.to_string());
+                return Some(Command::PublishGossipData { topic, data });
+            }
+
+            if let Some(matches) = matches.subcommand_matches("led") {
+                let data = if matches.subcommand_matches("on").is_some() {
+                    Some(GossipMessage::SetLed(LedState::On))
+                } else if matches.subcommand_matches("off").is_some() {
+                    Some(GossipMessage::SetLed(LedState::Off))
+                } else if let Some(freq) = matches
+                    .subcommand_matches("blink")
+                    .and_then(|matches| matches.value_of("frequency"))
+                    .and_then(|s| u64::from_str(s).ok())
+                {
+                    Some(GossipMessage::SetLed(LedState::Blink(Duration::from_secs(
+                        freq,
+                    ))))
+                } else {
+                    None
+                };
+                if let Some(data) = data {
+                    Some(Command::PublishGossipData { topic, data });
+                }
+            }
+        }
+
+        if let Some(key) = matches
+            .subcommand_matches("get-record")
+            .and_then(|matches| matches.value_of("key"))
+        {
+            return Some(Command::GetRecord(key.to_string()));
+        }
+
+        if let Some((key, value)) = matches
+            .subcommand_matches("put-record")
+            .and_then(|matches| matches.value_of("key"))
+            .and_then(|k| matches.value_of("value").map(|v| (k.to_string(), v.into())))
+        {
+            return Some(Command::PutRecord { key, value });
+        }
+
+        if let Some(key) = matches
+            .subcommand_matches("remove-record")
+            .and_then(|matches| matches.value_of("key"))
+        {
+            return Some(Command::RemoveRecord(key.to_string()));
+        }
+
+        if matches.subcommand_matches("shutdown").is_some() {
+            return Some(Command::Shutdown);
+        }
+
+        None
     }
 }

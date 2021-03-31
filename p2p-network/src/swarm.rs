@@ -1,37 +1,21 @@
 use crate::types::*;
 mod behaviour;
 mod transport;
+use async_std::task::{self, Context, Poll};
 use behaviour::{Behaviour, BehaviourEvent};
-use core::str::FromStr;
 use futures::{
     channel::mpsc::{UnboundedReceiver, UnboundedSender},
     prelude::*,
     select,
-    task::{Context, Poll},
 };
 use libp2p::{
-    gossipsub::IdentTopic,
-    kad::{KademliaEvent, QueryResult},
+    gossipsub::{GossipsubEvent, GossipsubMessage},
+    kad::{GetRecordOk, KademliaEvent, PutRecordOk, QueryId, QueryResult},
     swarm::SwarmEvent,
     Multiaddr, Swarm,
 };
+use std::str::FromStr;
 use transport::TransportLayer;
-
-macro_rules! await_swarm_event {
-    ($swarm:expr, $protocol:ident, { $($case:ident$fields:tt $(if $cond:expr)? => $ret:expr),+ }) => {{
-        let protocol_name = format!("{}Event", $protocol);
-        async {
-            loop {
-                if let BehaviourEvent::$protocol(event) = $swarm.next().await {
-                    match event {
-                        $( $protocol_name::$case$fields => $(if $cond)? { return $ret; }, )+
-                        _ => {}
-                    }
-                }
-            }
-        }
-    }};
-}
 
 #[macro_export]
 macro_rules! chain {
@@ -90,12 +74,14 @@ impl PollSwarm {
     // }
 
     pub async fn run(mut self) {
+        std::thread::sleep(std::time::Duration::from_secs(5));
         if self.start_listening().await.is_err() {
             return println!("Failed to start listening. Aborting.");
         }
         loop {
             select! {
-                user_cmd = self.cmd_rx.next().fuse() => match user_cmd {
+                user_cmd = self.cmd_rx.next().fuse() => {
+                    match user_cmd {
                     Some(cmd) => {
                         let res = self.run_command(cmd.clone()).await;
                         if let Err(err) = res {
@@ -107,10 +93,41 @@ impl PollSwarm {
                         }
                     },
                     None => break
-                },
-                swarm_event = self.swarm.next_event().fuse() => println!("{:?}", swarm_event),
+                }},
+                _ = self.swarm.next().fuse() => {},
             };
         }
+    }
+
+    fn await_query_result<T>(
+        &mut self,
+        query_id: QueryId,
+        f: &dyn Fn(&QueryResult) -> Option<T>,
+    ) -> Result<T, String> {
+        task::block_on(async {
+            loop {
+                match self.swarm.next().await {
+                    BehaviourEvent::Kademlia(KademliaEvent::QueryResult { id, result, .. }) => {
+                        let is_query = id == query_id;
+                        if let Some(value) = is_query.then(|| f(&result)).flatten() {
+                            return Ok(value);
+                        }
+                    }
+                    BehaviourEvent::Gossipsub(GossipsubEvent::Message {
+                        message: GossipsubMessage { data, topic, .. },
+                        ..
+                    }) => {
+                        if let Ok(msg) = serde_json::from_slice::<GossipMessage>(&data) {
+                            let send = self.send_gossip_msg(topic.into_string(), msg).await;
+                            if let Err(err) = send {
+                                return Err(err);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        })
     }
 
     async fn run_command(&mut self, cmd: Command) -> Result<(), String> {
@@ -140,72 +157,50 @@ impl PollSwarm {
                 CommandResult::PublishResult(res)
             }
             Command::GetRecord(key) => {
-                let query_id = self.swarm.behaviour_mut().get_record(&key);
-                let mut query_result = None;
-                while query_result.is_none() {
-                    if let BehaviourEvent::Kademlia(KademliaEvent::QueryResult {
-                        id,
-                        result: QueryResult::GetRecord(get_record_res),
-                        ..
-                    }) = self.swarm.next().await
-                    {
-                        if query_id == id {
-                            query_result = Some(get_record_res);
-                        }
-                    }
-                }
-                let res = query_result
-                    .unwrap()
-                    .map(|record_ok| {
-                        record_ok
-                            .records
+                let query_id = self.swarm.behaviour_mut().get_record(key);
+                let is_match = |event: &QueryResult| match event {
+                    QueryResult::GetRecord(Ok(GetRecordOk { records, .. })) => {
+                        let records = records
                             .iter()
                             .map(|peer_rec| peer_rec.record.clone())
-                            .collect()
-                    })
-                    .map_err(|e| format!("{:?}", e));
+                            .collect();
+                        Some(Ok(records))
+                    }
+                    QueryResult::GetRecord(Err(e)) => Some(Err(format!("{:?}", e))),
+                    _ => None,
+                };
+                let res = self.await_query_result(query_id, &is_match)?;
                 CommandResult::GetRecordResult(res)
             }
             Command::PutRecord { key, value } => {
-                let res = self
-                    .swarm
-                    .behaviour_mut()
-                    .put_record(&key, value)
-                    .map_err(|e| format!("{:?}", e))
-                    .and_then(|query_id| {
-                        let mut query_result = None;
-                        while query_result.is_none() {
-                            if let BehaviourEvent::Kademlia(KademliaEvent::QueryResult {
-                                id,
-                                result: QueryResult::PutRecord(put_record_res),
-                                ..
-                            }) = self.swarm.next().await
-                            {
-                                if query_id == id {
-                                    query_result = Some(put_record_res);
-                                }
-                            }
-                        }
-                        query_result
-                            .unwrap()
-                            .map(|_| ())
-                            .map_err(|e| format!("{:?}", e))
-                    });
+                let put_result = self.swarm.behaviour_mut().put_record(key, value);
+                let res = match put_result {
+                    Ok(query_id) => {
+                        let is_match = |event: &QueryResult| match event {
+                            QueryResult::PutRecord(Ok(PutRecordOk { .. })) => Some(Ok(())),
+                            QueryResult::PutRecord(Err(e)) => Some(Err(format!("{:?}", e))),
+                            _ => None,
+                        };
+                        self.await_query_result(query_id, &is_match)?
+                    }
+                    Err(err) => Err(format!("{:?}", err)),
+                };
                 CommandResult::PutRecordResult(res)
             }
+            Command::RemoveRecord(key) => {
+                self.swarm.behaviour_mut().remove_record(key);
+                CommandResult::RemoveRecordAck
+            }
             Command::Shutdown => CommandResult::ShutdownAck,
-            _ => todo!(),
         };
         Self::send_channel(&mut self.cmd_res_tx, res).await
     }
 
     async fn send_gossip_msg(
         &mut self,
-        topic: IdentTopic,
+        topic: String,
         message: GossipMessage,
     ) -> Result<(), String> {
-        // let result = serde_json::from_slice::<GossipMessage>(data);
-        let topic = topic.to_string();
         let send = (topic, message);
         Self::send_channel(&mut self.message_tx, send).await
     }

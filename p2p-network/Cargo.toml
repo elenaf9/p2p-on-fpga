@@ -21,3 +21,5 @@ serde = { version = "1.0.117", default-features = false, features = [ "alloc", "
 serde_json = { version = "1.0.59", default-features = false, features = [ "alloc" ] }
 regex = "1.4.5"
 futures = "0.3.13"
+clap = {version = "2.33.3", features = [ "yaml" ] }
+async-std = "1.6"

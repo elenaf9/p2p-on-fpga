@@ -1,5 +1,6 @@
 use super::transport::TransportLayer;
 use crate::types::*;
+use async_std::task::{Context, Poll};
 use libp2p::{
     gossipsub::{
         error::{PublishError, SubscriptionError},
@@ -12,7 +13,7 @@ use libp2p::{
         Kademlia, KademliaEvent, QueryId, Quorum, Record,
     },
     mdns::{Mdns, MdnsConfig, MdnsEvent},
-    swarm::{NetworkBehaviourEventProcess, Swarm},
+    swarm::{NetworkBehaviourAction, NetworkBehaviourEventProcess, PollParameters, Swarm},
     NetworkBehaviour,
 };
 
@@ -20,7 +21,6 @@ use libp2p::{
 pub enum BehaviourEvent {
     Kademlia(KademliaEvent),
     Gossipsub(GossipsubEvent),
-    Mdns(MdnsEvent),
 }
 
 #[derive(NetworkBehaviour)]
@@ -64,15 +64,20 @@ impl Behaviour {
         self.gossipsub.publish(topic, data_vec)
     }
 
-    pub fn get_record(&mut self, key: &String) -> QueryId {
-        let key = Key::new(key);
+    pub fn get_record(&mut self, key: String) -> QueryId {
+        let key = Key::new(&key);
         self.kademlia.get_record(&key, Quorum::Majority)
     }
 
-    pub fn put_record(&mut self, key: &String, value: Vec<u8>) -> Result<QueryId, StoreError> {
-        let key = Key::new(key);
+    pub fn put_record(&mut self, key: String, value: Vec<u8>) -> Result<QueryId, StoreError> {
+        let key = Key::new(&key);
         let record = Record::new(key, value);
         self.kademlia.put_record(record, Quorum::Majority)
+    }
+
+    pub fn remove_record(&mut self, key: String) {
+        let key = Key::new(&key);
+        self.kademlia.remove_record(&key)
     }
 
     async fn new(transport: &TransportLayer) -> Result<Behaviour, ()> {
@@ -97,6 +102,17 @@ impl Behaviour {
             events: Vec::new(),
         })
     }
+
+    fn poll<TEv>(
+        &mut self,
+        _cx: &mut Context<'_>,
+        _params: &mut impl PollParameters,
+    ) -> Poll<NetworkBehaviourAction<TEv, BehaviourEvent>> {
+        if !self.events.is_empty() {
+            return Poll::Ready(NetworkBehaviourAction::GenerateEvent(self.events.remove(0)));
+        }
+        Poll::Pending
+    }
 }
 
 impl NetworkBehaviourEventProcess<MdnsEvent> for Behaviour {
@@ -113,8 +129,8 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for Behaviour {
 }
 
 impl NetworkBehaviourEventProcess<KademliaEvent> for Behaviour {
-    fn inject_event(&mut self, _event: KademliaEvent) {
-        todo!()
+    fn inject_event(&mut self, event: KademliaEvent) {
+        self.events.push(BehaviourEvent::Kademlia(event));
     }
 }
 
