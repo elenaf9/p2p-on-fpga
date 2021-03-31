@@ -33,9 +33,7 @@ impl TransportLayer {
         // tcp layer
         let tcp_config = TcpConfig::new().nodelay(true);
         // enable dns adresses in multiaddress
-        let transport = DnsConfig::system(tcp_config)
-            .await
-            .unwrap();
+        let transport = DnsConfig::system(tcp_config).await.unwrap();
         // noise encryption with Diffie-Hellman key exchange
         let noise_keys = noise::Keypair::<noise::X25519Spec>::new()
             .into_authentic(&self.keypair)

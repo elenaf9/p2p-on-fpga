@@ -2,64 +2,37 @@ use super::transport::TransportLayer;
 use crate::types::*;
 use libp2p::{
     gossipsub::{
-        error::PublishError, Gossipsub, GossipsubConfigBuilder, GossipsubEvent, GossipsubMessage,
-        IdentTopic, MessageAuthenticity, MessageId,
+        error::{PublishError, SubscriptionError},
+        Gossipsub, GossipsubConfigBuilder, GossipsubEvent, IdentTopic, MessageAuthenticity,
+        MessageId,
     },
-    kad::{record::store::MemoryStore, Kademlia, KademliaEvent},
+    kad::{
+        record::{store::MemoryStore, Key},
+        store::Error as StoreError,
+        Kademlia, KademliaEvent, QueryId, Quorum, Record,
+    },
     mdns::{Mdns, MdnsConfig, MdnsEvent},
     swarm::{NetworkBehaviourEventProcess, Swarm},
     NetworkBehaviour,
 };
 
+#[derive(Debug)]
+pub enum BehaviourEvent {
+    Kademlia(KademliaEvent),
+    Gossipsub(GossipsubEvent),
+    Mdns(MdnsEvent),
+}
+
 #[derive(NetworkBehaviour)]
+#[behaviour(out_event = "BehaviourEvent", poll_method = "poll")]
 pub struct Behaviour {
     mdns: Mdns,
     kademlia: Kademlia<MemoryStore>,
     gossipsub: Gossipsub,
-}
-
-impl NetworkBehaviourEventProcess<MdnsEvent> for Behaviour {
-    fn inject_event(&mut self, event: MdnsEvent) {
-        if let MdnsEvent::Discovered(list) = event {
-            for (peer_id, multiaddr) in list {
-                self.kademlia.add_address(&peer_id, multiaddr);
-            }
-        }
-    }
-}
-
-impl NetworkBehaviourEventProcess<KademliaEvent> for Behaviour {
-    fn inject_event(&mut self, _event: KademliaEvent) {
-        todo!()
-    }
-}
-
-impl NetworkBehaviourEventProcess<GossipsubEvent> for Behaviour {
-    fn inject_event(&mut self, event: GossipsubEvent) {
-        if let GossipsubEvent::Message {
-            message_id,
-            message:
-                GossipsubMessage {
-                    source,
-                    data,
-                    topic,
-                    ..
-                },
-            ..
-        } = event
-        {
-            let source = source
-                .map(|p| p.to_base58())
-                .unwrap_or_else(|| String::from("Anonymous"));
-            println!(
-                "Received Message {}\nTopic: {}\nPublished by {}\nData:{:?}",
-                message_id,
-                topic.into_string(),
-                source,
-                data
-            )
-        }
-    }
+    #[behaviour(ignore)]
+    is_bootstrapped: bool,
+    #[behaviour(ignore)]
+    events: Vec<BehaviourEvent>,
 }
 
 impl Behaviour {
@@ -71,18 +44,14 @@ impl Behaviour {
         Swarm::new(transport.build().await, behaviour, peer_id)
     }
 
-    pub fn subscribe(&mut self, topic: String) -> bool {
+    pub fn subscribe(&mut self, topic: String) -> Result<bool, SubscriptionError> {
         let topic = IdentTopic::new(topic);
-        self.gossipsub
-            .subscribe(&topic)
-            .expect("Failed to subscribe.")
+        self.gossipsub.subscribe(&topic)
     }
 
-    pub fn unsubscribe(&mut self, topic: String) {
+    pub fn unsubscribe(&mut self, topic: String) -> Result<bool, PublishError> {
         let topic = IdentTopic::new(topic);
-        self.gossipsub
-            .unsubscribe(&topic)
-            .expect("Failed to unsubscribe.");
+        self.gossipsub.unsubscribe(&topic)
     }
 
     pub fn publish_data(
@@ -93,6 +62,17 @@ impl Behaviour {
         let topic = IdentTopic::new(topic);
         let data_vec = serde_json::to_vec(data).expect("Could not serialize data.");
         self.gossipsub.publish(topic, data_vec)
+    }
+
+    pub fn get_record(&mut self, key: &String) -> QueryId {
+        let key = Key::new(key);
+        self.kademlia.get_record(&key, Quorum::Majority)
+    }
+
+    pub fn put_record(&mut self, key: &String, value: Vec<u8>) -> Result<QueryId, StoreError> {
+        let key = Key::new(key);
+        let record = Record::new(key, value);
+        self.kademlia.put_record(record, Quorum::Majority)
     }
 
     async fn new(transport: &TransportLayer) -> Result<Behaviour, ()> {
@@ -113,6 +93,33 @@ impl Behaviour {
             mdns,
             kademlia,
             gossipsub,
+            is_bootstrapped: false,
+            events: Vec::new(),
         })
+    }
+}
+
+impl NetworkBehaviourEventProcess<MdnsEvent> for Behaviour {
+    fn inject_event(&mut self, event: MdnsEvent) {
+        if let MdnsEvent::Discovered(list) = event {
+            for (peer_id, multiaddr) in list {
+                self.kademlia.add_address(&peer_id, multiaddr);
+            }
+            if !self.is_bootstrapped {
+                self.is_bootstrapped = self.kademlia.bootstrap().is_ok();
+            }
+        }
+    }
+}
+
+impl NetworkBehaviourEventProcess<KademliaEvent> for Behaviour {
+    fn inject_event(&mut self, _event: KademliaEvent) {
+        todo!()
+    }
+}
+
+impl NetworkBehaviourEventProcess<GossipsubEvent> for Behaviour {
+    fn inject_event(&mut self, event: GossipsubEvent) {
+        self.events.push(BehaviourEvent::Gossipsub(event));
     }
 }
