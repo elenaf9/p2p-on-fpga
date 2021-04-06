@@ -1,7 +1,11 @@
 use clap::{App, Arg};
 
+// Build App for Command Line Interface to parse user input.
 pub fn build_app<'a, 'b>() -> App<'a, 'b> {
     App::new("p2p")
+        .version("0.1.0")
+        .author("Elena Frank")
+        .about("CLI for the p2p-network interaction")
         .subcommand(
             App::new("subscribe")
                 .about("subscribe to a gossip-sub topic")
@@ -50,11 +54,11 @@ pub fn build_app<'a, 'b>() -> App<'a, 'b> {
                 )
                 .subcommand(
                     App::new("message").about("send a string message").arg(
-                        Arg::with_name("message")
-                            .help("the message that should be send")
-                            .short("m")
-                            .long("message")
-                            .value_name("message")
+                        Arg::with_name("value")
+                            .help("the string value of the message that should be send")
+                            .short("v")
+                            .long("value")
+                            .value_name("value")
                             .takes_value(true)
                             .required(true),
                     ),
@@ -72,19 +76,6 @@ pub fn build_app<'a, 'b>() -> App<'a, 'b> {
         .subcommand(
             App::new("get-record")
                 .about("query for a kademlia record")
-                .arg(
-                    Arg::with_name("key")
-                        .help("the key of the record")
-                        .short("k")
-                        .long("key")
-                        .value_name("key")
-                        .takes_value(true)
-                        .required(true),
-                ),
-        )
-        .subcommand(
-            App::new("remove-record")
-                .about("remove a record from kademlia")
                 .arg(
                     Arg::with_name("key")
                         .help("the key of the record")
