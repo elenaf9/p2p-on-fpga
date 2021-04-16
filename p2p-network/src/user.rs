@@ -4,9 +4,8 @@ use futures::{
     select,
     task::{Context, Poll},
 };
-
-use crate::types::*;
-use async_std::io::{stdin, BufReader};
+use crate::{types::*, cli};
+use async_std::io::{self, BufReader};
 use std::{str::FromStr, time::Duration};
 
 // Task that handles all user and periphery interaction
@@ -38,7 +37,7 @@ impl UserTask {
     // for user input and incoming messages that are forwarded from the swarm task
     pub async fn run(mut self) {
         // Read from standard input
-        let mut stdin = BufReader::new(stdin()).lines();
+        let mut stdin = BufReader::new(io::stdin()).lines();
 
         loop {
             // simultainously poll both futures, select the one that return first.
@@ -48,18 +47,18 @@ impl UserTask {
                     let command = match line {
                         Some(Ok(line)) => self.parse_input(line),
                         Some(Err(err)) => {
-                            println!("Aborting due to error: {}", err);
+                            println!("> Aborting due to error: {}", err);
                             break;
                         }
                         None => {
-                            println!("Stdin closed. Aborting.");
+                            println!("> Stdin closed. Aborting.");
                             Some(Command::Shutdown)
                         }
                     };
                     if let Some(command) = command {
                         let res = self.handle_command(command.clone()).await;
                         if let Err(err) = res {
-                            println!("Aborting due to error: {}", err);
+                            println!("> Aborting due to error: {}", err);
                             break;
                         }
                         if let Command::Shutdown = command {
@@ -71,7 +70,7 @@ impl UserTask {
                 message = self.message_rx.next().fuse() => match message {
                     Some((topic, message)) => Self::print_incoming(topic, message),
                     None => {
-                        println!("Message channel closed unexpected. Aborting.");
+                        println!("> Message channel closed unexpected. Aborting.");
                         let _ = self.handle_command(Command::Shutdown).await;
                         break;
                     }
@@ -84,10 +83,10 @@ impl UserTask {
     fn print_incoming(topic: String, message: GossipMessage) {
         match message {
             GossipMessage::Message(msg) => {
-                println!("Received gossip message for topic {}:\n{:?}", topic, msg)
+                println!("> Received gossip message for topic {}:\n{:?}", topic, msg)
             }
             GossipMessage::SetLed(state) => {
-                println!("Received command to set led state: {}", state)
+                println!("> Received command to set led state: {}", state)
             }
         }
     }
@@ -112,13 +111,13 @@ impl UserTask {
         let res = self.cmd_res_rx.next().await;
         match res.expect("Channel error") {
             CommandResult::SubscribeResult(Ok(true)) => {
-                println!("Successfully subscribed");
+                println!("> Successfully subscribed\n");
             }
             CommandResult::SubscribeResult(Ok(false)) => {
-                println!("Already subscribed");
+                println!("> Already subscribeds\n");
             }
             CommandResult::SubscribeResult(Err(err)) => {
-                println!("Failed to subscribe{:?}", err);
+                println!("> Failed to subscribe: {:?}s\n", err);
             }
             _ => unreachable!(),
         }
@@ -133,13 +132,13 @@ impl UserTask {
         let res = self.cmd_res_rx.next().await;
         match res.expect("Channel error") {
             CommandResult::UnsubscribResult(Ok(true)) => {
-                println!("Successfully unsubscribed.");
+                println!("> Successfully unsubscribed.\n");
             }
             CommandResult::UnsubscribResult(Ok(false)) => {
-                println!("No aktive subscription to that topic.");
+                println!("> No aktive subscription to that topic.\n");
             }
             CommandResult::UnsubscribResult(Err(err)) => {
-                println!("Failed to unsubscribe: {:?}.", err);
+                println!("> Failed to unsubscribe: {:?}.\n", err);
             }
             _ => unreachable!(),
         }
@@ -155,10 +154,10 @@ impl UserTask {
         let res = self.cmd_res_rx.next().await;
         match res.expect("Channel error") {
             CommandResult::PublishResult(Ok(_)) => {
-                println!("Sucessfully published message with.");
+                println!("> Sucessfully published message.\n");
             }
             CommandResult::PublishResult(Err(err)) => {
-                println!("Failed to publish: {:?}.", err);
+                println!("> Failed to publish: {:?}.\n", err);
             }
             _ => unreachable!(),
         }
@@ -174,7 +173,7 @@ impl UserTask {
         let res = self.cmd_res_rx.next().await;
         match res.expect("Channel error") {
             CommandResult::GetRecordResult(Ok(vec)) => {
-                println!("Found Records:");
+                println!("> Found Records:");
                 for record in vec {
                     if let Ok(message) = String::from_utf8(record.value.to_vec()) {
                         let pub_str = record
@@ -186,10 +185,10 @@ impl UserTask {
                 }
             }
             CommandResult::GetRecordResult(Err(GetRecordErr::NotFound(key))) => {
-                println!("No record with key {:?} was found.", key);
+                println!("> No record with key {:?} was found.\n", key);
             }
             CommandResult::GetRecordResult(Err(GetRecordErr::Other(err))) => {
-                println!("Failed to get record {:?}.", err);
+                println!("> Failed to get record {:?}.\n", err);
             }
             _ => unreachable!(),
         }
@@ -205,10 +204,10 @@ impl UserTask {
         let res = self.cmd_res_rx.next().await;
         match res.expect("Channel error") {
             CommandResult::PutRecordResult(Ok(())) => {
-                println!("Successfully publihed record.");
+                println!("> Successfully publihed record.\n");
             }
             CommandResult::PutRecordResult(Err(err)) => {
-                println!("Failed to get record {:?}.", err);
+                println!("> Failed to get record {:?}.\n", err);
             }
             _ => unreachable!(),
         }
@@ -259,15 +258,25 @@ impl UserTask {
                 });
 
         // Use the command line interface to parse the users arguments.
-        let mut app = super::cli::build_app();
+        let mut app = cli::build_app();
 
         // Checks if the line matches the required input, then try for each subsommand if it matches.
         let matches = app
-            .get_matches_from_safe_borrow(args)
+            .get_matches_from_safe_borrow(args.clone())
             .map_err(|_| {
-                println!("\nInvalid argument: \"{}\"\n", line);
-                let _ = app.print_long_help();
-                println!("\n\n");
+                let mut out = Vec::new();
+                let (is_sub, mut help)  = match line {
+                    _ if args.contains(&"subscribe".to_string()) => (true, cli::subscribe_cmd()),
+                    _ if args.contains(&"unsubscribe".to_string()) => (true, cli::unsubscribe_cmd()),
+                    _ if args.contains(&"publish".to_string()) => (true, cli::publish_cmd()),
+                    _ if args.contains(&"get-record".to_string()) => (true, cli::get_record_cmd()),
+                    _ if args.contains(&"put-record".to_string()) => (true, cli::put_record_cmd()),
+                    _ => (false, app)
+                };
+                let subcommand_string = is_sub.then(|| "\n p2p SUBCOMMAND \n").unwrap_or("\n");
+                help.write_long_help(&mut out).expect("Failed to write long help message");
+                let message = String::from_utf8(out).expect("Invalid help-message string");
+                println!("\n> Invalid argument: \"{}\"\n---------------{}---------------\n{}\n", line, subcommand_string, message);
             })
             .ok()?;
 

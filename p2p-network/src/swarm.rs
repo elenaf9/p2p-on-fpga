@@ -9,12 +9,12 @@ use futures::{
     select,
 };
 use libp2p::{
-    gossipsub::{GossipsubEvent, GossipsubMessage},
+    gossipsub::{GossipsubEvent, GossipsubMessage, error::PublishError},
     kad::{GetRecordError, GetRecordOk, KademliaEvent, PutRecordOk, QueryId, QueryResult},
     swarm::SwarmEvent,
     Multiaddr, Swarm,
 };
-use std::{str::FromStr, time::Duration};
+use std::str::FromStr;
 use transport::TransportLayer;
 
 // Task to manage all swarm interaction and polling.
@@ -75,9 +75,7 @@ impl SwarmTask {
             return println!("Failed to start listening. Aborting.");
         }
 
-        task::sleep(Duration::from_millis(100)).await;
-
-        println!("\nLocal peer Id: {:?}\n", self.swarm.local_peer_id());
+        println!("\n\nLocal peer Id: {:?}\n", self.swarm.local_peer_id());
         loop {
             // Simultainously poll both futures, select the one that return first.
             select! {
@@ -188,7 +186,12 @@ impl SwarmTask {
                     .swarm
                     .behaviour_mut()
                     .publish_data(topic, &data)
-                    .map_err(|e| format!("{:?}", e));
+                    .map_err(|e| {
+                        match e {
+                            PublishError::InsufficientPeers => "No known peers are subscribing to that topic.".into(),
+                            _ => format!("{:?}", e)
+                        }
+                    });
                 CommandResult::PublishResult(res)
             }
             Command::GetRecord(key) => {

@@ -153,6 +153,7 @@ impl NetworkBehaviourEventProcess<MdnsEvent> for Behaviour {
             // Add discovered peers and addresses to kademlia routing table
             for (peer_id, multiaddr) in list {
                 self.kademlia.add_address(&peer_id, multiaddr);
+                self.gossipsub.add_explicit_peer(&peer_id);
             }
             // Bootstrap kademlia if the first peer is discovered.
             // The bootrapping process introduces the local peer to the kademlia DHT by adding
