@@ -12,7 +12,7 @@ Folder / File | Description
 -|-
 [p2p-network](./p2p-network) | The Proof-of-Concept of the Peer-to-Peer network.
 [hello-baremetal-world](./hello-baremetal-world) | The Rust embedded application that was written for the ICCFPGA.
-[rust-libp2p](./rust-libp2p) | Submodule: fork of the libp2p project with minor removals to support the `riscv64gc-unknown-linux-gnu` target.
+[rust-libp2p](https://github.com/elenaf9/rust-libp2p/tree/cross-compile/riscv64-linux) | Submodule: fork of the libp2p project with minor removals to support the `riscv64gc-unknown-linux-gnu` target.
 [workflow](./documentation/BSc-Thesis/workflow.md) | Log / Tracking of the practical work with the hardware.
 [testing Linux-on-Litex-VexRiscv](./documentation/litex-vexriscv/testing-linux/) | Instructions for routing network access and transfering files to the Arty board after loading Linux-on-Litex-VexRiscv.
 [documentation](./documentation) | Documentation and notes that were collected during research.
