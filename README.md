@@ -2,8 +2,9 @@
 
 This repository contains the source code that was written as part of my Bachelor thesis "Implementation of a Peer-to-Peer Network on an Field Programmable Gate Array".
 The inital goal for the bachelor thesis was the implementation of a RISC-V soft-core on an FPGA, as platform to run the Peer-to-Peer network.
-This repository contains a baremetal Rust programm for the [IOTA Crypto Core FPGA](https://medium.com/@punpck/iota-crypto-core-fpga-final-report-77cc6a4aec9a), and the Proof-of-Concept of the Peer-to-Peer network.
-Apart from that, it includes some collected notes and the document for tracking the work in this thesis. It has to be noted that moste of these documentation are more a collection of information, rather than well-formulated descriptions.
+This repository contains a baremetal Rust programm for the [IOTA Crypto Core FPGA](https://medium.com/@punpck/iota-crypto-core-fpga-final-report-77cc6a4aec9a), and the Proof-of-Concept of the Peer-to-Peer network.  
+_Note: Executing the Rust programm requires that the Rust toolchain is installed, the instructions for this are availabe [here](https://rustup.rs/)_.  
+Apart from that, the repository includes some collected notes and the document for tracking the work in this thesis. It has to be noted that moste of these documentation are more a collection of information, rather than well-formulated descriptions.
 The comprehensive description of the relevant topics will be added in the form of chapters from the bachelor thesis paper, once the thesis was officially examined.
 
 ## Content
