@@ -1,4 +1,4 @@
-// source https://craigjb.com/2020/01/22/ecp5/
+//! reference https://craigjb.com/2020/01/22/ecp5/
 #![feature(asm)]
 #![no_std]
 #![no_main]
@@ -8,6 +8,7 @@ extern crate riscv_rt;
 
 use riscv_rt::entry;
 
+// sleep
 fn delay(cycles: u32) {
     for _ in 0..cycles {
         unsafe {
@@ -16,12 +17,14 @@ fn delay(cycles: u32) {
     }
 }
 
+// set the led on Pin 19 on/off
 fn set_leds(mask: u32) {
     unsafe {
         *(0xf1030000 as *mut u32) = mask << 19; // set bit 19 
     }
 }
 
+// entry for the no_std rust programm
 #[entry]
 fn main() -> ! {
     let mut mask = 1;

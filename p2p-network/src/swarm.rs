@@ -9,7 +9,7 @@ use futures::{
     select,
 };
 use libp2p::{
-    gossipsub::{GossipsubEvent, GossipsubMessage, error::PublishError},
+    gossipsub::{error::PublishError, GossipsubEvent, GossipsubMessage},
     kad::{GetRecordError, GetRecordOk, KademliaEvent, PutRecordOk, QueryId, QueryResult},
     swarm::SwarmEvent,
     Multiaddr, Swarm,
@@ -186,11 +186,11 @@ impl SwarmTask {
                     .swarm
                     .behaviour_mut()
                     .publish_data(topic, &data)
-                    .map_err(|e| {
-                        match e {
-                            PublishError::InsufficientPeers => "No known peers are subscribing to that topic.".into(),
-                            _ => format!("{:?}", e)
+                    .map_err(|e| match e {
+                        PublishError::InsufficientPeers => {
+                            "No known peers are subscribing to that topic.".into()
                         }
+                        _ => format!("{:?}", e),
                     });
                 CommandResult::PublishResult(res)
             }

@@ -1,11 +1,11 @@
+use crate::{cli, types::*};
+use async_std::io::{self, BufReader};
 use futures::{
     channel::mpsc::{UnboundedReceiver, UnboundedSender},
     prelude::*,
     select,
     task::{Context, Poll},
 };
-use crate::{types::*, cli};
-use async_std::io::{self, BufReader};
 use std::{str::FromStr, time::Duration};
 
 // Task that handles all user and periphery interaction
@@ -83,10 +83,10 @@ impl UserTask {
     fn print_incoming(topic: String, message: GossipMessage) {
         match message {
             GossipMessage::Message(msg) => {
-                println!("> Received gossip message for topic {}:\n{:?}", topic, msg)
+                println!("> Received gossip message for topic {}:\n{:?}\n", topic, msg)
             }
             GossipMessage::SetLed(state) => {
-                println!("> Received command to set led state: {}", state)
+                println!("> Received command to set led state: {}\n", state)
             }
         }
     }
@@ -173,7 +173,7 @@ impl UserTask {
         let res = self.cmd_res_rx.next().await;
         match res.expect("Channel error") {
             CommandResult::GetRecordResult(Ok(vec)) => {
-                println!("> Found Records:");
+                println!("> Found Record:");
                 for record in vec {
                     if let Ok(message) = String::from_utf8(record.value.to_vec()) {
                         let pub_str = record
@@ -204,7 +204,7 @@ impl UserTask {
         let res = self.cmd_res_rx.next().await;
         match res.expect("Channel error") {
             CommandResult::PutRecordResult(Ok(())) => {
-                println!("> Successfully publihed record.\n");
+                println!("> Successfully published record.\n");
             }
             CommandResult::PutRecordResult(Err(err)) => {
                 println!("> Failed to get record {:?}.\n", err);
@@ -248,7 +248,7 @@ impl UserTask {
                         let mut new_args = string
                             .replace("=", " ")
                             .split(' ')
-                            .map(|s| s.to_string())
+                            .filter_map(|s| (!s.is_empty()).then(|| s.to_string()))
                             .collect();
                         args.append(&mut new_args);
                     } else {
@@ -265,18 +265,24 @@ impl UserTask {
             .get_matches_from_safe_borrow(args.clone())
             .map_err(|_| {
                 let mut out = Vec::new();
-                let (is_sub, mut help)  = match line {
+                let (is_sub, mut help) = match line {
                     _ if args.contains(&"subscribe".to_string()) => (true, cli::subscribe_cmd()),
-                    _ if args.contains(&"unsubscribe".to_string()) => (true, cli::unsubscribe_cmd()),
+                    _ if args.contains(&"unsubscribe".to_string()) => {
+                        (true, cli::unsubscribe_cmd())
+                    }
                     _ if args.contains(&"publish".to_string()) => (true, cli::publish_cmd()),
                     _ if args.contains(&"get-record".to_string()) => (true, cli::get_record_cmd()),
                     _ if args.contains(&"put-record".to_string()) => (true, cli::put_record_cmd()),
-                    _ => (false, app)
+                    _ => (false, app),
                 };
                 let subcommand_string = is_sub.then(|| "\n p2p SUBCOMMAND \n").unwrap_or("\n");
-                help.write_long_help(&mut out).expect("Failed to write long help message");
+                help.write_long_help(&mut out)
+                    .expect("Failed to write long help message");
                 let message = String::from_utf8(out).expect("Invalid help-message string");
-                println!("\n> Invalid argument: \"{}\"\n---------------{}---------------\n{}\n", line, subcommand_string, message);
+                println!(
+                    "\n> Invalid argument: \"{}\"\n---------------{}---------------\n{}\n",
+                    line, subcommand_string, message
+                );
             })
             .ok()?;
 

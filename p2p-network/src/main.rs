@@ -1,3 +1,37 @@
+//! # Basic Peer-to-Peer network using the libp2p concepts and protocols.
+//!
+//! ## USAGE
+//!
+//! Start two peers in different terminal windows:
+//!
+//! ```sh
+//! $ cargo run
+//!
+//! p2p 0.1.0
+//! Elena Frank
+//! CLI for the p2p-network interaction
+//!
+//! USAGE:
+//!     p2p [SUBCOMMAND]
+//!
+//! SUBCOMMANDS:
+//!     get-record     query for a kademlia record
+//!     publish        publish data to certain gossip-sub topic
+//!     put-record     publish a record to the kademlia DHT
+//!     shutdown       shutdown the app
+//!     subscribe      subscribe to a gossip-sub topic
+//!     unsubscribe    unsubscribe from a gossip-sub topic
+//!
+//! Local peer Id: PeerId("12D3KooWBJTyq5sNop5PSkw5Yvc56t3HGgVQ27SYrwUvYLY42EW4")
+//! ```
+//! Run different commands, e.g.:
+//! ```sh
+//! p2p subscribe -t my_topic
+//! ```
+//!
+//! Publishing a message to a topic requires that at least one other peer exists that is subscribing to that topic.
+//!
+
 mod cli;
 mod swarm;
 mod types;

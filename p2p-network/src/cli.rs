@@ -1,10 +1,14 @@
-use clap::{App, Arg, AppSettings};
+use clap::{App, AppSettings, Arg};
 
 pub fn subscribe_cmd<'a, 'b>() -> App<'a, 'b> {
     App::new("subscribe")
         .about("subscribe to a gossip-sub topic")
         .usage("p2p subscribe --topic <topic>")
-        .settings(&[AppSettings::DisableHelpSubcommand, AppSettings::DisableHelpFlags, AppSettings::DisableVersion])
+        .settings(&[
+            AppSettings::DisableHelpSubcommand,
+            AppSettings::DisableHelpFlags,
+            AppSettings::DisableVersion,
+        ])
         .arg(
             Arg::with_name("topic")
                 .help("the topic to subscribe to")
@@ -20,7 +24,11 @@ pub fn unsubscribe_cmd<'a, 'b>() -> App<'a, 'b> {
     App::new("unsubscribe")
         .about("unsubscribe from a gossip-sub topic")
         .usage("p2p unsubscribe --topic <topic>")
-        .settings(&[AppSettings::DisableHelpSubcommand, AppSettings::DisableHelpFlags, AppSettings::DisableVersion])
+        .settings(&[
+            AppSettings::DisableHelpSubcommand,
+            AppSettings::DisableHelpFlags,
+            AppSettings::DisableVersion,
+        ])
         .arg(
             Arg::with_name("topic")
                 .help("the topic to unsubscribe from")
@@ -82,7 +90,11 @@ pub fn get_record_cmd<'a, 'b>() -> App<'a, 'b> {
     App::new("get-record")
         .about("query for a kademlia record")
         .usage("p2p get-record --key <key>")
-        .settings(&[AppSettings::DisableHelpSubcommand, AppSettings::DisableHelpFlags, AppSettings::DisableVersion])
+        .settings(&[
+            AppSettings::DisableHelpSubcommand,
+            AppSettings::DisableHelpFlags,
+            AppSettings::DisableVersion,
+        ])
         .arg(
             Arg::with_name("key")
                 .help("the key of the record")
@@ -97,8 +109,12 @@ pub fn get_record_cmd<'a, 'b>() -> App<'a, 'b> {
 pub fn put_record_cmd<'a, 'b>() -> App<'a, 'b> {
     App::new("put-record")
         .about("publish a record to the kademlia DHT")
-        .usage("p2p get-record --key <key> --value <value>")
-        .settings(&[AppSettings::DisableHelpSubcommand, AppSettings::DisableHelpFlags, AppSettings::DisableVersion])
+        .usage("p2p put-record --key <key> --value <value>")
+        .settings(&[
+            AppSettings::DisableHelpSubcommand,
+            AppSettings::DisableHelpFlags,
+            AppSettings::DisableVersion,
+        ])
         .arg(
             Arg::with_name("key")
                 .help("the key of the record")
@@ -131,5 +147,9 @@ pub fn build_app<'a, 'b>() -> App<'a, 'b> {
         .subcommand(get_record_cmd())
         .subcommand(put_record_cmd())
         .subcommand(App::new("shutdown").about("shutdown the app"))
-        .settings(&[AppSettings::DisableHelpSubcommand, AppSettings::DisableHelpFlags, AppSettings::DisableVersion])
+        .settings(&[
+            AppSettings::DisableHelpSubcommand,
+            AppSettings::DisableHelpFlags,
+            AppSettings::DisableVersion,
+        ])
 }

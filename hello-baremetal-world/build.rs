@@ -1,9 +1,11 @@
+//! Source: https://docs.rs/riscv-rt/0.8.0/riscv_rt/index.html
+
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
-/// Put the linker script somewhere the linker can find it.
+/// Copies the memory.x file into the out directory so that the linker script can find it.
 fn main() {
     let out_dir = env::var("OUT_DIR").expect("No out dir");
     let dest_path = Path::new(&out_dir);

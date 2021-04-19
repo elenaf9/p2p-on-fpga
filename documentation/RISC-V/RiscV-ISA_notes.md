@@ -99,3 +99,18 @@ https://www.youtube.com/watch?v=PNcX3MCAIjo
     - typically used inboot stage following ROM/Loader
     - Provides support for reference platforms
     - Generic simple drivers included for M-mode to operate
+
+https://www.youtube.com/watch?v=mD-njD2QKN0
+- RISC: "Reduces Instruction Set"
+  - in general, instructions are usually implemented in hardware, reduced means that more instructions are necessary ("more lines of assembly code") since the instruction perform rather basic operations, and more RAM is used, but the hardware is less complex -> emphasis on software ([RISC vs CISC](https://cs.stanford.edu/people/eroberts/courses/soco/projects/risc/risccisc/)); today, only Intel x86 use CISC
+  - executes more instructions but fewer clock cycles per instructions -> fast than CISC
+  - use fast RAM to build fast instruction cache of user visible instructions, not fixed hardware microroutines
+  - IEE Milestone: "The reduced instructions of RISC-I reduced the hardware for instruction decode and control, which enabled a flat 32-bit address space , a large set of registers, operating system, RISC-I influenced instruction sets widely used today (...)"
+- open source instruction set architecture (the most common ISAs like ARM and x86 are patented) which is great for SoCs in out "PostPC era"
+- OpenRISC: didn't separate architecture and implementation; "too early, came up in the PC era"
+- three base integer ISAs, one per address width (RV32I, RV64I, RV128I), <50 hardware instructions needed
+- very modular: can optionally add extensions like privileged instructions, instructions for multiplication, compressed instructions, atomic instructions, etc    
+https://www.youtube.com/watch?v=kNsWipR1MWM
+- simple base, modular, stable, community designed
+- clear separation between user and privileged IS; avoids architecture or technology-dependent features
+- broad Ecosystem
