@@ -1,4 +1,4 @@
-use libp2p::{gossipsub::MessageId, kad::Record};
+use libp2p::{gossipsub::MessageId, kad::Record, Multiaddr, PeerId};
 use serde::{Deserialize, Serialize};
 use std::{fmt, time::Duration};
 
@@ -8,6 +8,8 @@ pub type Topic = String;
 // This Command represents a kademlia or gossibsub operation.
 #[derive(Debug, Clone)]
 pub enum Command {
+    // Explicitely connect a peer by address.
+    Connect(Multiaddr),
     // Subscribe to a gossibsub topic so that all messages published to that topic
     // will be received.
     SubscribeGossipTopic(Topic),
@@ -35,17 +37,10 @@ pub enum Command {
     Shutdown,
 }
 
-// Error on the attempt to get a record.
-#[derive(Debug, Clone)]
-pub enum GetRecordErr {
-    // Record has not been published to the DHT.
-    NotFound(String),
-    // Other error upon querying a the record.
-    Other(String),
-}
-
 #[derive(Debug, Clone)]
 pub enum CommandResult {
+    // Result of the attempt to connect a peer by address.
+    ConnectResult(Result<PeerId, String>),
     // Result of the subscribe command.
     // Return Ok(true) if successfully subscribe,
     // Ok(false) if the peer is already subscribed to the topic.
@@ -58,7 +53,7 @@ pub enum CommandResult {
     PublishResult(Result<MessageId, String>),
     // Result of querying the DHT for a record.
     // Can return multiple records if they use the same key.
-    GetRecordResult(Result<Vec<Record>, GetRecordErr>),
+    GetRecordResult(Result<Vec<Record>, String>),
     // Result of publishing a record to the DHT
     PutRecordResult(Result<(), String>),
     // Acknowledge shutdown command

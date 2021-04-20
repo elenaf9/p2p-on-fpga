@@ -135,6 +135,26 @@ pub fn put_record_cmd<'a, 'b>() -> App<'a, 'b> {
         )
 }
 
+pub fn connect_cmd<'a, 'b>() -> App<'a, 'b> {
+    App::new("connect")
+        .about("explicitly connect a new peer")
+        .usage("p2p connect -a <multi-address>")
+        .settings(&[
+            AppSettings::DisableHelpSubcommand,
+            AppSettings::DisableHelpFlags,
+            AppSettings::DisableVersion,
+        ])
+        .arg(
+            Arg::with_name("address")
+                .help("the mutliaddress of the peer")
+                .short("a")
+                .long("address")
+                .value_name("addr")
+                .takes_value(true)
+                .required(true),
+        )
+}
+
 // Build App for Command Line Interface to parse user input.
 pub fn build_app<'a, 'b>() -> App<'a, 'b> {
     App::new("p2p")
@@ -146,6 +166,7 @@ pub fn build_app<'a, 'b>() -> App<'a, 'b> {
         .subcommand(publish_cmd())
         .subcommand(get_record_cmd())
         .subcommand(put_record_cmd())
+        .subcommand(connect_cmd())
         .subcommand(App::new("shutdown").about("shutdown the app"))
         .settings(&[
             AppSettings::DisableHelpSubcommand,

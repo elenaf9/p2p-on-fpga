@@ -12,7 +12,7 @@ use libp2p::{
     gossipsub::{error::PublishError, GossipsubEvent, GossipsubMessage},
     kad::{GetRecordError, GetRecordOk, KademliaEvent, PutRecordOk, QueryId, QueryResult},
     swarm::SwarmEvent,
-    Multiaddr, Swarm,
+    Multiaddr, PeerId, Swarm,
 };
 use std::str::FromStr;
 use transport::TransportLayer;
@@ -61,7 +61,10 @@ impl SwarmTask {
         // On Success return the actual, OS assigned, listening address.
         loop {
             match self.swarm.next_event().await {
-                SwarmEvent::NewListenAddr(addr) => return Ok(addr),
+                SwarmEvent::NewListenAddr(addr) => {
+                    println!("\n\nStarted Listening on: {}", addr);
+                    return Ok(addr);
+                }
                 SwarmEvent::ListenerError { .. } => return Err(()),
                 _ => {}
             }
@@ -75,7 +78,7 @@ impl SwarmTask {
             return println!("Failed to start listening. Aborting.");
         }
 
-        println!("\n\nLocal peer Id: {:?}\n", self.swarm.local_peer_id());
+        println!("Local peer Id: {:?}\n", self.swarm.local_peer_id());
         loop {
             // Simultainously poll both futures, select the one that return first.
             select! {
@@ -126,7 +129,6 @@ impl SwarmTask {
         query_id: QueryId,
         f: &dyn Fn(&QueryResult) -> Option<T>,
     ) -> Result<T, String> {
-        // Block current thread until a result for the query was received.
         task::block_on(async {
             loop {
                 // Await next behaviour event
@@ -149,6 +151,49 @@ impl SwarmTask {
                                 return Err(err);
                             }
                         }
+                    }
+                    _ => {}
+                }
+            }
+        })
+    }
+
+    async fn dial_addr(&mut self, addr: Multiaddr) -> Result<PeerId, String> {
+        self.swarm
+            .dial_addr(addr.clone())
+            .map_err(|e| format!("{}", e))?;
+        task::block_on(async {
+            loop {
+                match self.swarm.next_event().await {
+                    SwarmEvent::Behaviour(BehaviourEvent::Gossipsub(GossipsubEvent::Message {
+                        message: GossipsubMessage { data, topic, .. },
+                        ..
+                    })) => {
+                        // Try parse and send received gossipsub message to user task.
+                        if let Ok(msg) = serde_json::from_slice::<GossipMessage>(&data) {
+                            let send = self.send_gossip_msg(topic.into_string(), msg).await;
+                            if let Err(err) = send {
+                                return Err(err);
+                            }
+                        }
+                    }
+                    SwarmEvent::ConnectionEstablished {
+                        peer_id, endpoint, ..
+                    } if endpoint.get_remote_address() == &addr => {
+                        return Ok(peer_id);
+                    }
+                    SwarmEvent::UnreachableAddr {
+                        address,
+                        error,
+                        attempts_remaining: 0,
+                        ..
+                    } if address == addr => {
+                        return Err(format!("{}", error));
+                    }
+                    SwarmEvent::UnknownPeerUnreachableAddr { address, error }
+                        if address == addr =>
+                    {
+                        return Err(format!("{}", error));
                     }
                     _ => {}
                 }
@@ -208,12 +253,9 @@ impl SwarmTask {
                         Some(Ok(records))
                     }
                     QueryResult::GetRecord(Err(GetRecordError::NotFound { key, .. })) => {
-                        let e = String::from_utf8(key.to_vec()).unwrap_or(format!("{:?}", key));
-                        Some(Err(GetRecordErr::NotFound(e)))
+                        Some(Err(format!("Record for {:?} was not found", key)))
                     }
-                    QueryResult::GetRecord(Err(e)) => {
-                        Some(Err(GetRecordErr::Other(format!("{:?}", e))))
-                    }
+                    QueryResult::GetRecord(Err(e)) => Some(Err(format!("{:?}", e))),
                     _ => None,
                 };
 
@@ -241,6 +283,10 @@ impl SwarmTask {
                     Err(err) => Err(format!("{:?}", err)),
                 };
                 CommandResult::PutRecordResult(res)
+            }
+            Command::Connect(addr) => {
+                let res = self.dial_addr(addr).await;
+                CommandResult::ConnectResult(res)
             }
             Command::Shutdown => CommandResult::ShutdownAck,
         };

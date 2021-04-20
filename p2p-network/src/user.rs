@@ -6,6 +6,7 @@ use futures::{
     select,
     task::{Context, Poll},
 };
+use libp2p::Multiaddr;
 use std::{str::FromStr, time::Duration};
 
 // Task that handles all user and periphery interaction
@@ -83,7 +84,10 @@ impl UserTask {
     fn print_incoming(topic: String, message: GossipMessage) {
         match message {
             GossipMessage::Message(msg) => {
-                println!("> Received gossip message for topic {}:\n{:?}\n", topic, msg)
+                println!(
+                    "> Received gossip message for topic {}:\n{:?}\n",
+                    topic, msg
+                )
             }
             GossipMessage::SetLed(state) => {
                 println!("> Received command to set led state: {}\n", state)
@@ -91,25 +95,29 @@ impl UserTask {
         }
     }
 
-    // Handle a user command
+    // Handle a user command, block task until a result is returned.
     async fn handle_command(&mut self, command: Command) -> Result<(), String> {
+        self.send_channel(&command).await?;
+        let res = self
+            .cmd_res_rx
+            .next()
+            .await
+            .ok_or_else(|| String::from("Channel Error"))?;
         match command {
-            Command::SubscribeGossipTopic(topic) => self.subscribe(topic).await,
-            Command::UnsubscribeGossipTopic(topic) => self.unsubscribe(topic).await,
-            Command::PublishGossipData { topic, data } => self.publish(topic, data).await,
-            Command::GetRecord(key) => self.get_record(key).await,
-            Command::PutRecord { key, value } => self.put_record(key, value).await,
-            Command::Shutdown => self.shutdown().await,
-        }
+            Command::SubscribeGossipTopic(..) => self.match_subscribe_res(res),
+            Command::UnsubscribeGossipTopic(..) => self.match_unsubscribe_res(res),
+            Command::PublishGossipData { .. } => self.match_publish_res(res),
+            Command::GetRecord(..) => self.match_get_record_res(res),
+            Command::PutRecord { .. } => self.match_put_record_res(res),
+            Command::Connect(..) => self.match_connect_res(res),
+            Command::Shutdown => self.match_shutdown_res(res),
+        };
+        Ok(())
     }
 
-    // Send command to subscribe to a gossipsub topic to swarm task.
-    // Poll Command-Result channel for result.
-    async fn subscribe(&mut self, topic: String) -> Result<(), String> {
-        let command = Command::SubscribeGossipTopic(topic);
-        self.send_channel(&command).await?;
-        let res = self.cmd_res_rx.next().await;
-        match res.expect("Channel error") {
+    // Print the outcome of the subscribe command.
+    fn match_subscribe_res(&mut self, res: CommandResult) {
+        match res {
             CommandResult::SubscribeResult(Ok(true)) => {
                 println!("> Successfully subscribed\n");
             }
@@ -119,18 +127,13 @@ impl UserTask {
             CommandResult::SubscribeResult(Err(err)) => {
                 println!("> Failed to subscribe: {:?}s\n", err);
             }
-            _ => unreachable!(),
+            _ => {}
         }
-        Ok(())
     }
 
-    // Send command to unsubscribe froma gossipsub topic to swarm task.
-    // Poll Command-Result channel for result.
-    async fn unsubscribe(&mut self, topic: String) -> Result<(), String> {
-        let command = Command::UnsubscribeGossipTopic(topic);
-        self.send_channel(&command).await?;
-        let res = self.cmd_res_rx.next().await;
-        match res.expect("Channel error") {
+    // Print the outcome of the unsubscribe command.
+    fn match_unsubscribe_res(&mut self, res: CommandResult) {
+        match res {
             CommandResult::UnsubscribResult(Ok(true)) => {
                 println!("> Successfully unsubscribed.\n");
             }
@@ -140,38 +143,26 @@ impl UserTask {
             CommandResult::UnsubscribResult(Err(err)) => {
                 println!("> Failed to unsubscribe: {:?}.\n", err);
             }
-            _ => unreachable!(),
+            _ => {}
         }
-        Ok(())
     }
 
-    // Send command to publish a gossipsub message for a topic to swarm task.
-    // Poll Command-Result channel for result.
-    async fn publish(&mut self, topic: String, data: GossipMessage) -> Result<(), String> {
-        let command = Command::PublishGossipData { data, topic };
-        self.send_channel(&command).await?;
-
-        let res = self.cmd_res_rx.next().await;
-        match res.expect("Channel error") {
+    // Print the outcome of the publish command.
+    fn match_publish_res(&mut self, res: CommandResult) {
+        match res {
             CommandResult::PublishResult(Ok(_)) => {
                 println!("> Sucessfully published message.\n");
             }
             CommandResult::PublishResult(Err(err)) => {
                 println!("> Failed to publish: {:?}.\n", err);
             }
-            _ => unreachable!(),
+            _ => {}
         }
-        Ok(())
     }
 
-    // Send command to query for a kademlia record to swarm task.
-    // Poll Command-Result channel for result.
-    async fn get_record(&mut self, key: String) -> Result<(), String> {
-        let command = Command::GetRecord(key.clone());
-        self.send_channel(&command).await?;
-
-        let res = self.cmd_res_rx.next().await;
-        match res.expect("Channel error") {
+    // Print the outcome of the get-record command.
+    fn match_get_record_res(&mut self, res: CommandResult) {
+        match res {
             CommandResult::GetRecordResult(Ok(vec)) => {
                 println!("> Found Record:");
                 for record in vec {
@@ -184,46 +175,44 @@ impl UserTask {
                     }
                 }
             }
-            CommandResult::GetRecordResult(Err(GetRecordErr::NotFound(key))) => {
-                println!("> No record with key {:?} was found.\n", key);
+            CommandResult::GetRecordResult(Err(error)) => {
+                println!("> Failed to get record: {:?}.\n", error);
             }
-            CommandResult::GetRecordResult(Err(GetRecordErr::Other(err))) => {
-                println!("> Failed to get record {:?}.\n", err);
-            }
-            _ => unreachable!(),
+            _ => {}
         }
-        Ok(())
     }
 
-    // Send command to publish a kademlia record to swarm task.
-    // Poll Command-Result channel for result.
-    async fn put_record(&mut self, key: String, value: Vec<u8>) -> Result<(), String> {
-        let command = Command::PutRecord { key, value };
-        self.send_channel(&command).await?;
-
-        let res = self.cmd_res_rx.next().await;
-        match res.expect("Channel error") {
+    // Print the outcome of the put-record command.
+    fn match_put_record_res(&mut self, res: CommandResult) {
+        match res {
             CommandResult::PutRecordResult(Ok(())) => {
                 println!("> Successfully published record.\n");
             }
             CommandResult::PutRecordResult(Err(err)) => {
                 println!("> Failed to get record {:?}.\n", err);
             }
-            _ => unreachable!(),
+            _ => {}
         }
-        Ok(())
     }
 
-    // Send shutdown command to swarm task, poll for result.
-    async fn shutdown(&mut self) -> Result<(), String> {
-        let command = Command::Shutdown;
-        self.send_channel(&command).await?;
+    // Print the outcome of the connect command.
+    fn match_connect_res(&mut self, res: CommandResult) {
+        match res {
+            CommandResult::ConnectResult(Ok(peer_id)) => {
+                println!("> Successfully connected to Peer {}.\n", peer_id);
+            }
+            CommandResult::ConnectResult(Err(err)) => {
+                println!("> Failed to dial the address: {}.\n", err);
+            }
+            _ => {}
+        }
+    }
 
-        let res = self.cmd_res_rx.next().await;
-        if let CommandResult::ShutdownAck = res.expect("Channel error") {
+    // Print the outcome of the shutdown command
+    fn match_shutdown_res(&mut self, res: CommandResult) {
+        if let CommandResult::ShutdownAck = res {
             self.cmd_res_rx.close();
         }
-        Ok(())
     }
 
     // Send a command via the channel to the swarm Task.
@@ -273,6 +262,7 @@ impl UserTask {
                     _ if args.contains(&"publish".to_string()) => (true, cli::publish_cmd()),
                     _ if args.contains(&"get-record".to_string()) => (true, cli::get_record_cmd()),
                     _ if args.contains(&"put-record".to_string()) => (true, cli::put_record_cmd()),
+                    _ if args.contains(&"connect".to_string()) => (true, cli::connect_cmd()),
                     _ => (false, app),
                 };
                 let subcommand_string = is_sub.then(|| "\n p2p SUBCOMMAND \n").unwrap_or("\n");
@@ -349,6 +339,17 @@ impl UserTask {
             .and_then(|(k, matches)| matches.value_of("value").map(|v| (k.to_string(), v.into())))
         {
             return Some(Command::PutRecord { key, value });
+        }
+
+        if let Some(addr_string) = matches
+            .subcommand_matches("connect")
+            .and_then(|matches| matches.value_of("address"))
+        {
+            if let Ok(addr) = Multiaddr::from_str(addr_string) {
+                return Some(Command::Connect(addr));
+            } else {
+                println!("> Failed to parse the given address into a Multiaddress.\n");
+            }
         }
 
         if matches.subcommand_matches("shutdown").is_some() {
