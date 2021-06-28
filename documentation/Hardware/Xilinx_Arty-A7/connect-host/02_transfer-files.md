@@ -4,21 +4,22 @@ Prerequisites:
 - Loaded Linux image to dev-board
 - Enabled ethernet connection between host computer and board
 
-### setup tftp server on host computer
+## Setup tftp server on host computer
 
 Instructions for Ubuntu [source](https://www.addictivetips.com/ubuntu-linux-tips/set-up-a-tftp-server-on-ubuntu-server/)
-```
+
+```sh
 # install prerequisites
 $ apt install xinetd tftpd tftp
 
 # configure tftpd
 $ mkdir -p /etc/xinetd.d/
 $ touch /etc/xinetd.d/tftp
-
 ```
-Insert the following configuration in `/etc/xinetd.d/tftp`
 
-```
+- Insert the following configuration in `/etc/xinetd.d/tftp`:
+
+```sh
 service tftp
 {
     protocol = udp
@@ -32,8 +33,9 @@ service tftp
 }
 ```
 
-create the directory for the uploaded / downloaded files
-```
+- Create the directory for the uploaded / downloaded files:
+
+```sh
 $ mkdir /tftpboot
 
 # allow access 
@@ -44,15 +46,17 @@ $ chown -R nobody /tftpboot
 
 ```
 
-restart TFTP server software
-```
-$ systemctl restart xinetd.service
+- Restart TFTP server software
+
+```sh
+systemctl restart xinetd.service
 ```
 
 ### download a file to the board
 
-Use the tftp command from BusyBox
-```
+- Use the tftp command from BusyBox
+
+```sh
 tftp [OPTIONS] HOST [PORT]
 Transfer a file from/to tftp server
 Options:
@@ -63,8 +67,8 @@ Options:
         -b SIZE Transfer blocks of SIZE octets
 ```
 
-To download a file to the board, run from the buildroot terminal: 
-```
-$ tftp -g -r <file-name> 192.168.1.100:69 
-```
+- To download a file to the board, run from the buildroot terminal:
 
+```sh
+tftp -g -r <file-name> 192.168.1.100:69 
+```

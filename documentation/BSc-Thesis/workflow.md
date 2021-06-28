@@ -351,14 +351,15 @@ __2021-02-07__
 - tried loading the freedom soc to the board with `sudo openocd -f ${INSTALL_DIR}/${FPGA_FAM}/conda/envs/${FPGA_FAM}/share/openocd/scripts/board/digilent_arty.cfg -c "init; pld load 0 E300ArtyDevKitFPGAChip.bit; exit"`
   - openocd finished and all LEDs got switched on, but apart from that could not verify it was successful; screen to `ttyUSB1` is blank
   - next steps is to build linux and busybox run it on the freedom gateware similar to how it can be [simulated on QEMU](https://risc-v-getting-starte-guide.readthedocs.io/en/latest/linux-qemu.html)
+---
+***Note**: Missing Logs*
 
-__2021-03-7__
-- tried simulation with qemu again: 
+---
 
 __2021-03-08__
 - installed vivado cable drivers to detect arty board via usb cable: run `(<Vivado installation dir>/data/xicom/cable_drivers/lin64/install_script/install_drivers/install_drivers` script
 -> should detect board in vivado via `Hardware Manager > Open Target > Auto detect`
-- tried compiling linux-on-litex-vexriscv with symbiflow toolchain, but error: 
+- tried compiling linux-on-litex-vexriscv with symbiflow toolchain, but error
 - loaded [freedom](https://github.com/sifive/freedom/) (rocket chip) to board by using vivado `Hardware Manager > Programm Device`, loading mcs did not work because of wrong board revision: https://github.com/sifive/freedom/issues/171, loaded bit file instead -> seems successfull, vivado output:
 ```
 set_property PROBES.FILE {} [get_hw_devices xc7a35t_0]
@@ -398,3 +399,7 @@ __2021-03-14__
 - managed to flash the mcs file of the freedom 310 to the arty board by adding in vivado the configuration memory file:
   - `> Add Configuration Memory File > s25fl128xxxxxx0.spo-x1_x2_x4 > Ok > Configuration File: freedom/builds/e300artydevkit/obj/E300ArtyDevKitFPGAChip.mcs`
   - Pop-up claimed that flashing worked, but after booting from Configuration Memory device is not doing the supposed blinking of lights
+
+---
+---
+***Note**: this workflow is not up-to-date anymore.*

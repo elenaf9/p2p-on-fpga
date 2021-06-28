@@ -1,5 +1,6 @@
 # Field programmable gate array
-https://www.youtube.com/watch?v=gUsHwi4M4xE
+
+Source: <https://www.youtube.com/watch?v=gUsHwi4M4xE>
 - programmable chip to design chips from scratch
 - no intended function
 - flexible, can do any digital functionality (not analog)
@@ -31,28 +32,25 @@ https://www.youtube.com/watch?v=gUsHwi4M4xE
   - complicated, many traps, complex tools,
   - hard to chose / compare; not common terminology/ architecture
 
-https://www.xilinx.com/products/silicon-devices/fpga/what-is-an-fpga.html
+Source: <https://www.xilinx.com/products/silicon-devices/fpga/what-is-an-fpga.html>
 - matrix of configurable blocks connected via programmable intercoonects
 - can be reprogrammaed after maufacturing
 - most typs are SRAM based which can be reprogrammed as the design eveolves
 
-https://www.digikey.com/en/blog/fpgas-101-a-beginners-guide
+Source: <https://www.digikey.com/en/blog/fpgas-101-a-beginners-guide>
 - LUT implements an arbitrary logic function
 - "building blocks for creating digital circuits"
 - main benefits: flexiblity and speed
 - can use soft processor
 
-https://commons.wikimedia.org/wiki/File:FPGA_cell_example.png
-
-https://www.youtube.com/watch?v=lrXjuotxqzE
+Source: <https://www.youtube.com/watch?v=lrXjuotxqzE>
 FlipFlops:
 - "register"
 - 2 In: Clock, Data-In, 1 Out Q(and stuff like Reset-Input)
 - D-FlipFlop mostly used
 - flipflops keep the state of an fpga
 
-
-https://www.eetimes.com/all-about-fpgas/
+Source: <https://www.eetimes.com/all-about-fpgas/>
 - former purpose of fpgas: prototyping asics, achive time-to-marked but will be replaced with asics asap -> can be programmed within a  minute
 -> not always replaced with asics anymore
 - Configurable logic blocks (CLB): create a small state machine
@@ -88,30 +86,34 @@ https://www.eetimes.com/all-about-fpgas/
   - Flash EPROM bits for eacb programming element
     - non-volatile but reprogrammable
 
+## FPGA Clock
 
-__FPGA Clock__   
-https://hardwarebee.com/ultimate-guide-fpga-clock/
+Source: <https://hardwarebee.com/ultimate-guide-fpga-clock/>
 - signal inside any digital circuit that determines how fast a flip flop (or a group of flip flops) runs
 - clock signal is connected to all flip flops and RAM blocks and activates them according to the clock frequency
 - FPGAs typically consist of several clock signals and thus allow different areas to operate in different speeds
 - drives the FPGA design and determines how fast it can run and process data
 - refer to PLL to use a single clock domain to generate multiple frequencies of waves and run different components
-- PLL: "phase locked loop" takes the reference clock and spins it up to generate a very high frequency -> can manipulate the code to change how often your clock enabler gets pulsed 
+- PLL: "phase locked loop" takes the reference clock and spins it up to generate a very high frequency -> can manipulate the code to change how often your clock enabler gets pulsed
 - but: multiple clock domains can get difficult if you want to transfer data between them
-https://www.youtube.com/watch?v=lrXjuotxqzE
+
+Source: <https://www.youtube.com/watch?v=lrXjuotxqzE>  
 Clock in FPGA: `(_____|^^^^^|_____|^^^^^)`
 - squarewave
 - runs though FPGA at a certain frequency, e.g. 1 MHz
 - input for all flipflops, drives the fpga
 - flipflops are triggered at the edge of the clock (most of the time the risin of the clock from 0 to 1)
 Example 1:
-```
+
+```none
 DATA:   ___|^^^^^^^^|______________|^^^^^^^
 CLOCK:  _____|^^^^^|_____|^^^^^|_____|^^^^^
 Q:      _____|^^^^^^^^^^^|___________|^^^^^^
 ```
+
 -> Q only goes high on clock trigger ("Only sees Data on rising edge of clock"), clock aligned
-```
+
+```none
 Example 2:
 DATA:   _______|^^^^^^^|_____________
 CLOCK:  _____|^^^^^|_____|^^^^^|_____

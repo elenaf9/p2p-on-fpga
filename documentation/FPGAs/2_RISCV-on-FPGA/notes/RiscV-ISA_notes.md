@@ -1,4 +1,6 @@
-"RISC-V Vietnam 2020: 1040 RISC-V: Instruction Sets Want to be Free (Krste Asanović)" (www.youtube.com/watch?v=fCzvkP890KM)
+# RISC-V Instruction Set Architecture
+
+Source: [RISC-V Vietnam 2020: 1040 RISC-V: Instruction Sets Want to be Free (Krste Asanović)](www.youtube.com/watch?v=fCzvkP890KM)
 
 - Why ISA matters: ISA is most important interface in computer system -> where software meets hardware
 - ISAs often come and go, if they are propretary, their existence is tied to the companies fortune and will
@@ -38,8 +40,7 @@ RISC-V coding spaces:
 - Reserved: reserved for futures standard extension
 - Custom: for implementer-specific extendsions
 
-David Patterson RISC-V Lecture: https://www.youtube.com/watch?v=mD-njD2QKN0
-
+Source: [David Patterson RISC-V Lecture](https://www.youtube.com/watch?v=mD-njD2QKN0)
 - Three base integer ISAs, one peer addres width RV32I, RV64I, RV128I; minimal: <50 hardware instructions needed
 - standard extensions
   - multiply M
@@ -50,7 +51,7 @@ David Patterson RISC-V Lecture: https://www.youtube.com/watch?v=mD-njD2QKN0
   - Quad-precosopm floating point Q
   - compressed instruciton encoding 16b and 32b C
 - privileged architecture (also hypervised, but not listed below due to not relevant for my thesis), clean split between layers of the software stack
-  - embedded device running single application: 
+  - embedded device running single application:
     - Application > Applicaiton Binary Interface (ABI: user ISA + calls to AEE) > Application Execution Environment (AEE)
   - classion OS multiprogramm
     - Application > ABI > OS > System Binary Interface (user ISA + privileged ISA + calls to SEE) > Supervisor Execution Environment (SEE)
@@ -62,14 +63,14 @@ David Patterson RISC-V Lecture: https://www.youtube.com/watch?v=mD-njD2QKN0
   - details of execution env and hardware platform isolated from OS ports
 - 4 supervisore architectures e.g. Mbare for baremetal (no tranlstion or protection), Mbb for base and bounds protection, ..
 
-Krste Asanovis RISC-V Lecture https://www.youtube.com/watch?v=KxuQW8HWBXI
+Source: [Krste Asanovis RISC-V Lecture](https://www.youtube.com/watch?v=KxuQW8HWBXI)
 - suits all implementation technologies and all sizes
 - native hardware ISA
 
 - privileged modes:
-    - User (U)
-    - Supervisor (S)
-    - machine (M)
+  - User (U)
+  - Supervisor (S)
+  - machine (M)
   - combinations:
     - M (simple embedded systems) (Mbare)
       - no address translation / protection
@@ -89,8 +90,7 @@ Rocket Core Generator
 - 64-bit 5-stage single-issue in order pipeline (IF, ID, EX, MEM, WB)
 - MMU supports page-base virutal memory
 
-https://www.youtube.com/watch?v=PNcX3MCAIjo
-
+Source: <https://www.youtube.com/watch?v=PNcX3MCAIjo>
 - SBI (System Binary Interface)
   - calling conventions between Supervisor (S-mode OS) and Supervisor Executing enviroment (SEE)
 - OpenSBI: open source SPI implementations
@@ -100,7 +100,7 @@ https://www.youtube.com/watch?v=PNcX3MCAIjo
     - Provides support for reference platforms
     - Generic simple drivers included for M-mode to operate
 
-https://www.youtube.com/watch?v=mD-njD2QKN0
+Source: <https://www.youtube.com/watch?v=mD-njD2QKN0>
 - RISC: "Reduces Instruction Set"
   - in general, instructions are usually implemented in hardware, reduced means that more instructions are necessary ("more lines of assembly code") since the instruction perform rather basic operations, and more RAM is used, but the hardware is less complex -> emphasis on software ([RISC vs CISC](https://cs.stanford.edu/people/eroberts/courses/soco/projects/risc/risccisc/)); today, only Intel x86 use CISC
   - executes more instructions but fewer clock cycles per instructions -> fast than CISC
@@ -109,8 +109,9 @@ https://www.youtube.com/watch?v=mD-njD2QKN0
 - open source instruction set architecture (the most common ISAs like ARM and x86 are patented) which is great for SoCs in out "PostPC era"
 - OpenRISC: didn't separate architecture and implementation; "too early, came up in the PC era"
 - three base integer ISAs, one per address width (RV32I, RV64I, RV128I), <50 hardware instructions needed
-- very modular: can optionally add extensions like privileged instructions, instructions for multiplication, compressed instructions, atomic instructions, etc    
-https://www.youtube.com/watch?v=kNsWipR1MWM
+- very modular: can optionally add extensions like privileged instructions, instructions for multiplication, compressed instructions, atomic instructions, etc
+
+Source: <https://www.youtube.com/watch?v=kNsWipR1MWM>
 - simple base, modular, stable, community designed
 - clear separation between user and privileged IS; avoids architecture or technology-dependent features
 - broad Ecosystem

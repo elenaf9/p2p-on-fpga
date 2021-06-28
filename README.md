@@ -8,6 +8,7 @@ Apart from that, the repository includes some collected notes and the document f
 The comprehensive description of the relevant topics will be added in the form of chapters from the bachelor thesis paper, once the thesis was officially examined.
 
 ## Content
+
 Folder / File | Description
 -|-
 [p2p-network](./p2p-network) | The Proof-of-Concept of the Peer-to-Peer network.
@@ -18,4 +19,5 @@ Folder / File | Description
 [documentation](./documentation) | Documentation and notes that were collected during research.
 
 ## Abstract
+
   *Field Programmable Gate Arrays (FPGAs) are integrated circuits that do not have any application specific functionality, but instead consist of a large amount of logical elements that can be re-programmed after manufacturing. This elementary design allows to use Hardware Description Languages (HDLs) to implement entire processors in software, that mirror the behaviour of a hardwired implementation. In this thesis, the two existing open-source cores VexRiscv and Rocket are described, that both implement the RISC-V Instruction Set Architecture on FGPAs. The cores are discussed together with projects that design System-on-Chips around them and facilitate running Linux, with the goal of adopting such an existing implementation as platform for a Peer-to-Peer network. The application for the Peer-to-Peer network is written in the Rust programming language and uses the protocols and libraries of the Libp2p framework. For the demonstration of the discussed designs and software on actual hardware, the IOTA Crypto Core FPGA (ICCFPGA) and the Xilinx Arty A7-35T development board are evaluated and tested.*

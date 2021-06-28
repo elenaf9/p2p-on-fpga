@@ -1,5 +1,6 @@
 # Generating a core with litex
-source: https://www.youtube.com/watch?v=nJ1rkUn-pUA
+
+Source: <https://www.youtube.com/watch?v=nJ1rkUn-pUA>
 migen / nmigen (nmigen = new migen):
 - litex still based on migen, not ported to nmigen yet
 - python generator for HDL logic
