@@ -12,3 +12,7 @@ OpenSBI requires an underlying platform-specific firmware running in *M*-mode, t
 This library also defines an interface for integrating platform specific operations like console access functions.
 The platform-independent SBI library can be compiled with platform-dependent hardware manipulation functions into a platform-specific SBI library, that implements the actual SBI call processing.  
 OpenSBI already includes such platform specific examples for a range of platforms, with the Freedom U 540 (that is implemented via the Freedom U SDK described in [2-4_Rocket-Chip](documentation/FPGAs/2_RISCV-on-FPGA/2-4_Rocket-Chip.md)) being one of them.
+
+## (Additional) Resources
+
+[1] RISC-V Open Source Supervisor Binary Interface. <https://github.com/riscv/opensbi>

@@ -1,6 +1,6 @@
-# Implementation of a Peer-to-Peer Network on an Field Programmable Gate Array
+# Implementation of a Peer-to-Peer Network on a Field Programmable Gate Array
 
-This repository contains the source code that was written as part of my Bachelor thesis "Implementation of a Peer-to-Peer Network on an Field Programmable Gate Array".
+This repository contains the source code that was written as part of my Bachelor thesis "Implementation of a Peer-to-Peer Network on a Field Programmable Gate Array".
 The inital goal for the bachelor thesis was the implementation of a RISC-V soft-core on an FPGA, as platform to run the Peer-to-Peer network.
 This repository contains a baremetal Rust programm for the [IOTA Crypto Core FPGA](https://medium.com/@punpck/iota-crypto-core-fpga-final-report-77cc6a4aec9a), and the Proof-of-Concept of the Peer-to-Peer network.  
 _Note: Executing the Rust programm requires that the Rust toolchain is installed, the instructions for this are availabe [here](https://rustup.rs/)_.  
