@@ -1,4 +1,4 @@
-## Log workflow and current status
+# Log progress and current status
 
 __2020-12-12__:
 - Connect to raspberry pi via ssh:

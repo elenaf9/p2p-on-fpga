@@ -40,7 +40,7 @@ The above code shows such a gate-level Verilog implementation for a simple circu
 ![Netlist circuit for Verilog code](images/smpl_circuit_verilog.png)  
 (*Source: [6]*)
 
-The end-to-end synthesis process, starting from HDL up until the bitstream that is used to program the FPGA, is described in the markdown about [Symbiflow - the GCC of FPGAs](symbiflow.md).
+The end-to-end synthesis process, starting from HDL up until the bitstream that is used to program the FPGA, is described in the markdown about [Symbiflow - the GCC of FPGAs](Symbiflow-toolchain.md).
 
 ## (Additional) Resources
 

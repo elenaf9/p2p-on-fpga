@@ -1,4 +1,4 @@
-# Basic Peer-to-Peer network using the libp2p concepts and protocols
+# Basic Peer-to-Peer network using the Libp2p concepts and protocols
 
 ## Libp2p protocols
 

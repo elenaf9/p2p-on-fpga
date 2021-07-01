@@ -16,7 +16,7 @@ The iccfpga-dev board on top has a socket for the iccfpga module, and a Raspberr
 ![iccfpga-dev v2.1](images/iccfpga-setup2.jpg)
 In regards to the P2P network, using the development board together with a Raspberry Pi could have enabled Internet connection by configuring the Raspberry Pi to forward the traffic from the ICCFPGA UART to the network.
 
-**As described in the [Hardware/README](documentation/Hardware/README.md), the ICCFPGA is not suited to run an OS, which is required for using the Rust Standard Library. It was only used to test a [baremetal Rust programm](hello-baremetal-world). The [Xilinx Arty A7](documentation/Hardware/2_Xilinx_Arty-A7) was used instead.**
+**As described in the [Used-Hardware/README](documentation/Hardware/README.md), the ICCFPGA is not suited to run an OS, which is required for using the Rust Standard Library. It was only used to test a [baremetal Rust programm](hello-baremetal-world). The [Xilinx Arty A7](documentation/Hardware/2_Xilinx_Arty-A7) was used instead.**
 
 ## (Additional) Resources
 

@@ -1,6 +1,7 @@
 # Symbiflow - "The GCC for FPGAs"
 
 In order to implement the written code on the hardware, the vendors of the FPGAs provide software that compiles the code into a bitstream that then can be loaded to the FPGA. While these tools are convenient to use, they are mostly closed-sourced and often require a licence that either costs money or doesn't include all features, e.g. [Vivado for Xilinx](https://euler.ecs.umass.edu/ece232/pdf/03-verilog-11.pdf) or [Quartus II](www.intel.com/content/www/us/en/software/programmable/quartus-prime/overview.html) for Altera FPGAs.
+This is contrary to the aim for a fully transparent system, and ultimately it can not be verified that the described logic is actually implemented in the intended way.  
 However, within the recent years more open-source toolchains for this synthesis have emerged, one of them is Symbiflow.  
 [Symbiflow](https://symbiflow.github.io) is an umbrella project for different tools, projects and architecture definitions, and can be understood as the "GCC of FPGAs" [1].
 

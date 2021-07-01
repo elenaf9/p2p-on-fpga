@@ -19,3 +19,11 @@ Renode provides the necessary platform support and script to simulation the [SiF
 The emulation was successful and a test application that has been compiled for the `riscv64gc-unknown-linux-gnu` platform was loaded into the system, but due to the system using the GNU library C version 2.26 instead of the required version 2.29, the execution of the rust program failed in this case as well.
 
 **TL;DR: So far no system on an FPGA that fulfills all requirements was accomplished.**
+
+## Content
+
+Folder / File | Description
+-|-
+[1_IOTA-Crypto-Core](./1_IOTA-Crypto-Core) | Initial work with the IOTA Crypto Core FPGA.
+[2_Xilinx_Arty-A7](./2_Xilinx_Arty-A7) | Xilinx Arty A7-35T development Board.
+[2_Xilinx_Arty-A7: connect host](./2_Xilinx_Arty-A7/connect-host) | Connecting the Arty with a host computer and transferring files, after the [Linux-on-LiteX-VexRiscv project](documentation/FPGA/3_Linux-on-RISCV/Linux-on-LiteX-VexRiscv.md) was loaded to it.

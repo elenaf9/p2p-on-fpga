@@ -16,7 +16,7 @@ The below figure shows a SoC with two example tiles that use different cores, ea
 Using the Rocket Chip Generator, the SiFive company, which was founded by UC Berkely Professors to commercially distribute RISC-V processors and IPs, implemented the [Freedom E SDK](https://github.com/sifive/freedom-e-sdk), and the [Freedom Unleashed SDK (Freedom U SDK)](https://github.com/sifive/freedom-u-sdk).
 Since the source files are published on GitHub under the Apache-2.0 Licence, they can be used to easily implemented the Rocket Core if one of the boards with a supported revision is owned.
 This is of relevance because one of the platforms that is implemented with the Freedom E SKD, the [Freedom E310](https://github.com/sifive/freedom), is designed to be mapped on the Xilinx Arty A7 development board.
-The practical implementation of this is described in [Hardware/2_Xilinx_Arty-A7](documentation/Hardware/2_Xilinx_Arty-A7).
+The practical implementation of this is described in [Used-Hardware/2_Xilinx_Arty-A7](documentation/Hardware/2_Xilinx_Arty-A7).
 
 The Freedom E SDK is a library that provides scripts and configuration for using the SiFive [Freedom Metal](https://github.com/sifive/freedom-metal) library, which "enables portable, bare-metal application development for all of SiFive’s RISC-V IP, FPGA evaluation targets, and development boards."([ref](https://github.com/sifive/freedom-metal)).
 This means that it allows to run embedded software, and to port OS systems to RISC-V by using Freedom Metal as Hardware Abstraction Layer.
