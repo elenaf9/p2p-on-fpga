@@ -29,5 +29,5 @@ This folder contains documentation and notes that were collected during the rese
 
 Folder / File | Description
 -|-
-[FGPA](./FGPA) | Documentation of different open-source projects that implement a SoC with RISC-V Soft-CPU on FPGA, and facilitate running Linux.
+[FPGA](./FPGA) | Documentation of different open-source projects that implement a SoC with RISC-V Soft-CPU on FPGA, and facilitate running Linux.
 [Used Hardware](./Used-Hardware) | Description of Trial-and-Error work with the two boards ICCFPGA and Xilinx Arty-A7, in the attempt of implementing a system for which the Rust Standard library is supported.

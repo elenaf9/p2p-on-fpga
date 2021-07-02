@@ -15,5 +15,5 @@ Folder / File | Description
 -|-
 [p2p-network](./p2p-network) | The Proof-of-Concept of the Peer-to-Peer network.
 [hello-baremetal-world](./hello-baremetal-world) | A baremetal Rust application for the ICCFPGA.
-[rust-libp2p](https://github.com/elenaf9/rust-libp2p/tree/cross-compile/riscv64-linux) | Submodule: fork of the libp2p project with minor removals to support the `riscv64gc-unknown-linux-gnu` target.
+[rust-libp2p](https://github.com/elenaf9/rust-libp2p/tree/cross-compile/riscv64-linux) | Submodule: fork of the libp2p project to add support for riscv64 arch. Analogous to wasm32 not use ring crate since ring currently doesn't support riscv64.
 [documentation](./documentation) | Documentation and notes that were collected during research.
