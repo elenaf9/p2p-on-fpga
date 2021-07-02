@@ -2,9 +2,9 @@
 
 *Note: the program requires to use the Rust nightly channel.*
 
-A baremetal (`no_std`) Rust programm for the [IOTA Crypto Core](documentation/Hardware/1_IOTA-Crypto-Core) that configures one LED to blink.
+A baremetal (`no_std`) Rust programm for the [IOTA Crypto Core](../documentation/Used-Hardware/1_IOTA-Crypto-Core) that configures one LED to blink.
 Load it to the fpga with the following steps:
-- Follow the Quickstart Guide of the [iccfpga-manual](documentation/Hardware/1_IOTA-Crypto-Core/Ressources/iccfpga.pdf) to set up the environment on a Raspberry Pi that is connected to the iccfpga dev-board, and upload the core.
+- Follow the Quickstart Guide of the [iccfpga-manual](../documentation/Used-Hardware/1_IOTA-Crypto-Core/Ressources/iccfpga.pdf) to set up the environment on a Raspberry Pi that is connected to the iccfpga dev-board, and upload the core.
   If this was successfull, three LEDs should be turned on.
 - Run `start_debugger.sh` on raspberry pi (from the [iccfpga-utils/raspberry-scrips](https://gitlab.com/iccfpga-rv/iccfpga-utils/-/tree/master/raspberry_scripts))
 - With rust **nightly**: Add `riscv32imc-unknown-none-elf` target with rustup, compile `hello-baremetal-world` and copy the output to the home directory of the pi:

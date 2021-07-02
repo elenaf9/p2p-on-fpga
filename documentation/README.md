@@ -13,12 +13,12 @@ Eventually, the majority of work was devoted to researching and testing differen
 ## Chances for future work
 
 There are multiple options for continuing the work with FPGAs based on the insights described in this folder.
-The least time-consuming one is most likely to continue the work with the Renode simulation of the SiFive Unleashed board (this is briefly described in [Used-Hardware/README.md](Hardware/README.md). With the presumption that the application currently only fails to execute because of the version of the GNU C library, it could be attempted to update its version and then validate that the P2P Network works as expected.
-Alternatively for the Arty 35-T board, the [Linux-on-LiteX-Rocket](documentation/FPGAs/3_Linux-on-RISCV/Linux-on-Litex-Rocket.md) project was recently extended with support for the Arty 100-T board, which is a larger version of the 35-T.
+The least time-consuming one is most likely to continue the work with the Renode simulation of the SiFive Unleashed board (this is briefly described in [Used-Hardware/README.md](Used-Hardware/README.md). With the presumption that the application currently only fails to execute because of the version of the GNU C library, it could be attempted to update its version and then validate that the P2P Network works as expected.
+Alternatively for the Arty 35-T board, the [Linux-on-LiteX-Rocket](FPGA/3_Linux-on-RISCV/Linux-on-Litex-Rocket.md) project was recently extended with support for the Arty 100-T board, which is a larger version of the 35-T.
 It could be tested whether support for the 35-T version could also be possible, though the README.md of the project states:
 > The `a7-35` variant is probably too small to fit Rocket.
 
-Potentially, the [Linux-on-LiteX-VexRiscv](documentation/FPGAs/3_Linux-on-RISCV/Linux-on-LiteX-VexRiscv.md) could be used for comparison since this project supports the Arty A7-35T within a LiteX Soc, even though it is using a different soft-CPU.
+Potentially, the [Linux-on-LiteX-VexRiscv](FPGA/3_Linux-on-RISCV/README.md) could be used for comparison since this project supports the Arty A7-35T within a LiteX Soc, even though it is using a different soft-CPU.
 
 Independently of any further work on the firmware of the FPGA, Rust already includes initial support for the `riscv32gc-unknown-linux-gnu` target, with 32-bit RISC-V, Linux kernel version 5.4, and GNU C library version 2.33. The Rust standard library is currently not provided for this target.
 If support for std can be added, the `Linux-on-LiteX-VexRiscv` project could be tested, provided that the required version for Linux kernal and glibc are satisfy or can be updated.

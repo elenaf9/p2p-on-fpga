@@ -245,7 +245,7 @@ __2021-01-22__
 - Since in my above approach the CPU directly "jumps" to the programm instad of executing the opensbi.bin before (which is necessary to access the hardware properly), the program did most likely not run at all. I will need to think of another way to load my app binary onto the system
 
 __2021-01-25__
-- managed to configure network access for the board (steps are described [here](/documentation/linux-on-litex/02_route-network.md), this could now be used to install software from source
+- managed to configure network access for the board (steps are described [here](../../Used-Hardware/2_Xilinx_Arty-A7/connect-host/02_transfer-files.md), this could now be used to install software from source
 - this linux is using [BusyBox](https://www.commandlinux.com/man-page/man1/busybox.1.html) which is something I will look further into and maybe configure the install packages.
 
 Started programming the p2p-network in Rust by using the libp2p crate:
@@ -266,7 +266,7 @@ Started programming the p2p-network in Rust by using the libp2p crate:
 - not tested on hardware yet
 
 __2020-01-30__
-- configured TFTP server on my Ubuntu host computer according to [this](/documentation/linux-on-litex/03_transfer-files.md)
+- configured TFTP server on my Ubuntu host computer according to [this](../../Used-Hardware/2_Xilinx_Arty-A7/connect-host/02_transfer-files.md)
 -> managed to load compiled rust project to board
 - error executing a hello-world test programm that was compiled for `i686-unknown-linux-gnu"`: `line 1: syntax error: unexpected ")"`
 - error executing a the baremetal programm that ran on the iccfpga: 
@@ -339,7 +339,7 @@ __2021-02-07__
   - example `counter_test` was successfull
   - make example `linux_litex_demo` caused error:
   ```
-  ImportError: cannot import name 'antlr_to_tuple' from 'fasm.parser' (/media/elfr/f6d78728-cecd-4bcd-8a18-3f619826515c/home/elenaf/opt/symbiflow/xc7/conda/envs/xc7/lib/python3.7/site-packages/fasm/
+  ImportError: cannot import name 'antlr_to_tuple' from 'fasm.parser' (/symbiflow/xc7/conda/envs/xc7/lib/python3.7/site-packages/fasm/
   parser/__init__.py)                           
   Please install all dependencies and reinstall with:
   pip uninstall                                  
@@ -364,7 +364,7 @@ __2021-03-08__
 ```
 set_property PROBES.FILE {} [get_hw_devices xc7a35t_0]
 set_property FULL_PROBES.FILE {} [get_hw_devices xc7a35t_0]
-set_property PROGRAM.FILE {/media/elfr/f6d78728-cecd-4bcd-8a18-3f619826515c/home/elenaf/Hardware/FPGAs/freedom/builds/e300artydevkit/obj/E300ArtyDevKitFPGAChip.bit} [get_hw_devices xc7a35t_0]
+set_property PROGRAM.FILE {freedom/builds/e300artydevkit/obj/E300ArtyDevKitFPGAChip.bit} [get_hw_devices xc7a35t_0]
 program_hw_devices [get_hw_devices xc7a35t_0]
 INFO: [Labtools 27-3164] End of startup status: HIGH
 refresh_hw_device [lindex [get_hw_devices xc7a35t_0] 0]
