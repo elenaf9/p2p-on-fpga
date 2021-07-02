@@ -17,3 +17,28 @@ Folder / File | Description
 [hello-baremetal-world](./hello-baremetal-world) | A baremetal Rust application for the ICCFPGA.
 [rust-libp2p](https://github.com/elenaf9/rust-libp2p/tree/cross-compile/riscv64-linux) | Submodule: fork of the libp2p project to add support for riscv64 arch. Analogous to wasm32 not use ring crate since ring currently doesn't support riscv64.
 [documentation](./documentation) | Documentation and notes that were collected during research.
+
+## Status Quo
+
+- [ ] Researched open-source Projects for RISC-V cores / SoCs on FPGA
+  - [X] Soft-CPUs
+    - [X] RV32I(M)(A)(F)(D)(C) ISA VexRiscv core
+    - [X] RV32G / RV64G ISA Rocket Core
+  - [ ] System-on-Chip on FPGA
+    - [X] LiteX with VexRiscv core
+    - [ ] LiteX with Rocket core
+    - [X] SiFive Freedom Platform with Rocket Core
+  - [ ] Linux on FPGA
+    - [X] Linux-on-LiteX-VexRiscv
+    - [ ] Linux-on-Litex-Rocket
+- [ ] Peer-to-Peer Network
+  - [X] Write PoC for the P2P Network
+  - [ ] Cross-compile Rust code for RISC-V
+    - [X] Test baremetal target `riscv32imc-unknown-none-elf`
+    - [X] add support for `riscv64gc-unknown-linux-gnu` to rust-libp2p: analogous to wasm not use `ring` crate
+    - [ ] add support for `riscv64gc-unknown-linux-gnu` to `ring` crate
+- [ ] Test actual FPGA development boards
+  - [X] test baremetal App on ICCFPGA
+  - [X] test SoC with 32-bit RISC-V CPU on Xilinx Arty A7-35T: Linux-on-LiteX-VexRiscv
+  - [ ] test SoC with 64-bit RISC-V CPU on Xilinx Arty A7-35T
+  - [ ] Run Peer-to-Peer Network on actual hardware
